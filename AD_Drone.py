@@ -16,22 +16,15 @@ def dronRegistry(ip_reg, puerto_reg, alias):
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     client.connect(ADDR)
     print(f"Se ha establecido conexión en [{ADDR}]")
+    send(alias, client)
 
-    # envio del mensaje
-    message = alias.encode(FORMAT)
+def send(msg, client):
+    message = msg.encode(FORMAT)
     msg_length = len(message)
     send_length = str(msg_length).encode(FORMAT)
     send_length += b' ' * (HEADER - len(send_length))
     client.send(send_length)
     client.send(message)
-
-#def send(msg):
-#    message = msg.encode(FORMAT)
-#    msg_length = len(message)
-#    send_length = str(msg_length).encode(FORMAT)
-#    send_length += b' ' * (HEADER - len(send_length))
-#    client.send(send_length)
-#    client.send(message)
 
 ########## MAIN ###########
 # ip y puerto del engine
