@@ -42,6 +42,7 @@ def manejo_dron(conn, addr):
         if msg_length:
             msg_length = int(msg_length)
             alias = conn.recv(msg_length).decode(FORMAT)
+            print(f"Se ha recibido del dron {addr} el alias: {alias}")
             # pasamos el alias a la bbdd
             # leeremos de la bbdd el id y el token, y se lo devolveremos al dron
 
@@ -53,13 +54,19 @@ def registro_dron():
     while True:
         conn, addr = server.accept()
         thread = threading.Thread(target=manejo_dron, args=(conn, addr))
+        thread.start()
 
 
 # main
 # Parametros de AD_Registry
 # puerto de escucha
-# ip y puerto de la bbdd
-if(len(sys.argv) == 4):
+# ip y puerto de la bbdd (al no haber la vamos a omitir)
+#La lista de argumentos cuenta la llamada al programa como sys.arv[0]
+if(len(sys.argv) == 2):
+
+    PORT = int(sys.argv[1])
+
+
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server.bind(ADDR)
 
