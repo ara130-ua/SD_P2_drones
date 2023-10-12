@@ -10,7 +10,7 @@ ADDR = (SERVER, PORT)
 FORMAT = 'utf-8'
 
 def create_Dron(alias):
-    conexion = sqlite3.connect("BBDD.db")
+    conexion = sqlite3.connect("bd1.db")
     try:
         
         conexion.execute("insert into drones(alias) values ('"+alias+"')")
@@ -24,11 +24,13 @@ def create_Dron(alias):
 
         conexion.commit()
         print("Dron creado")
+
+        return id, token
     except sqlite3.OperationalError:
         print("Error al crear el dron")
         conexion.close()
 
-    return id, token
+        return "hola", "monada"
 
 def manejo_dron(conn, addr):
     print(f"Se ha conectado el dron {addr}")
@@ -45,7 +47,18 @@ def manejo_dron(conn, addr):
             print(f"Se ha recibido del dron {addr} el alias: {alias}")
             # pasamos el alias a la bbdd
             # leeremos de la bbdd el id y el token, y se lo devolveremos al dron
+            id, token = create_Dron(alias)
+            respuesta = str(id)+","+str(token)
+            send(respuesta, conn)
 
+def send(msg, server):
+    message = msg.encode(FORMAT)
+    msg_length = len(message)
+    send_length = str(msg_length).encode(FORMAT)
+    send_length += b' ' * (HEADER - len(send_length))
+    server.send(send_length)
+    print("Enviando mensaje: ", message)
+    server.send(message)
 
 
 def registro_dron():
