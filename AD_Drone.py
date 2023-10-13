@@ -1,5 +1,8 @@
 import socket
 import sys
+from kafka import KafkaConsumer
+from json import loads
+
 
 HEADER = 64
 PORT = 5050
