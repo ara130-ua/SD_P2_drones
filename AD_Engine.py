@@ -5,6 +5,9 @@ import sqlite3
 
 #def consulta_Clima():
     
+HEADER = 64
+PORT = 5050
+FORMAT = 'utf-8'
 
 ####main#####
 print ("Bienvenido al AD_Engine")
