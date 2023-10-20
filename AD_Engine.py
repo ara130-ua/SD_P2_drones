@@ -3,6 +3,10 @@ import threading
 import sys
 import sqlite3
 import datetime
+import time
+from kafka import KafkaProducer
+from json import dumps
+from kafka import KafkaConsumer
 
 
 #def consulta_Clima():
@@ -59,6 +63,13 @@ def manejoMapa(mapaBytes):
     print(strMapa)
 
     return(strMapa)
+
+def mandar_mapa(mapa):
+    producer = KafkaProducer(
+    value_serializer=lambda m: dumps(m).encode('utf-8'),
+    bootstrap_servers=['localhost:9092'])
+
+    producer.send("drones-topic", value=mapa)
 
 
 ####main#####
