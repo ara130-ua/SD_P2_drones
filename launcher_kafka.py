@@ -11,7 +11,7 @@ comando_zookeeper = "gnome-terminal -- bash -c '/home/joanclq/kafka/bin/zookeepe
 comando_broker = "gnome-terminal -- bash -c '/home/joanclq/kafka/bin/kafka-server-start.sh /home/joanclq/kafka/config/server.properties; exec bash'"
 
 # Creamos el topic
-create_topic = "gnome-terminal -- bash -c '/home/joanclq/kafka/bin/kafka-topics.sh --create --topic iabd-topic --bootstrap-server localhost:9092; exec bash'"
+create_topic = "gnome-terminal -- bash -c '/home/joanclq/kafka/bin/kafka-topics.sh --create --topic drones-topic --bootstrap-server localhost:9092; exec bash'"
 
 # Ejecutar los comandos en terminales separadas
 subprocess.run(comando_zookeeper, shell=True)
