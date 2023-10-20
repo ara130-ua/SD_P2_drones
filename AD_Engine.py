@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
     
 HEADER = 64
 FORMAT = 'utf-8'
+PORT = 5050
 
 # Manejo de ficheros
 def file_manipulation(name, mode):
