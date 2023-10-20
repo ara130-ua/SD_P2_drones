@@ -8,6 +8,7 @@ import datetime
     
 HEADER = 64
 FORMAT = 'utf-8'
+PORT = 5050
 
 # Manejo de ficheros
 def file_manipulation(name, mode):
@@ -53,7 +54,7 @@ print ("Bienvenido al AD_Engine")
 # número máximo de drones
 # IP y puerto del Broker
 # IP y puerto del AD_Wheather
-if  (len(sys.argv) == 6):
+if  (len(sys.argv) == 7):
     PORT = int(sys.argv[1])
     SERVER = socket.gethostbyname(socket.gethostbyname())
     ADDR = (SERVER,PORT)
