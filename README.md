@@ -31,3 +31,10 @@ Si apagamos el servidor de clima, pillar la última temperatura y los drones deb
 Utilizar timeout para verificar si un dron está o no disponible, si todos los demás completan la figura menos este
 
 para la comunicación dron-engine, no hacer ningún movimiento hasta que el engine devuelva el mapa actualizado, después se levantará el engine
+
+
+kafka-topics.sh --list --bootstrap-server <tu-servidor-kafka>
+
+
+PARA BORRAR UN TOPIC 
+kafka-topics.sh --delete --topic <nombre-del-topico> --bootstrap-server <tu-servidor-kafka>
