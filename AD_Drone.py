@@ -8,12 +8,12 @@ HEADER = 64
 PORT = 5050
 FORMAT = 'utf-8'
 
-def consumidor(ip_kafka, puerto_kafka):
+def consumidor(ip_kafka, puerto_kafka, id):
     consumer = KafkaConsumer(
         'drones-topic',
         auto_offset_reset='earliest',
         enable_auto_commit=True,
-        group_id='drones-grupo-1',
+        group_id= id,
         value_deserializer=lambda m: loads(m.decode('utf-8')),
         bootstrap_servers=[str(ip_kafka)+":"+str(puerto_kafka)])
     
@@ -52,6 +52,8 @@ def receive(client):
     else:
         print("No se ha recibido nada del servidor")
         return None
+    
+
 
 ########## MAIN ###########
 # ip y puerto del engine
@@ -61,9 +63,7 @@ def receive(client):
 if (len(sys.argv) == 8):
     #Argumentos dronRegistry( IP_Registry, Puerto_Registry, Alias_Dron )
     id, token = dronRegistry(sys.argv[5], sys.argv[6], sys.argv[7])
-    print( "id: ", id, " token: ", token)
-
-    
+    print( "id: ", id, " token: ", token)   
     
 else:
     print("No se ha podido conectar al servidor de registro, los argumentos son <IP_Engine> <Puerto_Engine> <IP_Kafka> <Puerto_Kafka> <IP_Registry> <Puerto_Registry> <Alias_Dron>")
