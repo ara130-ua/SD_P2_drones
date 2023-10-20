@@ -1,0 +1,47 @@
+Madrid|20
+Barcelona|22
+Paris|18
+Londres|16
+Roma|24
+Berlin|15
+Lisboa|19
+Amsterdam|14
+Viena|17
+Atenas|26
+Dublin|13
+Bruselas|12
+Helsinki|-10
+Oslo|-8
+Estocolmo|-9
+Copenhague|11client
+Praga|10
+Budapest|3
+Varsovia|-13
+Zurich|-15
+Ginebra|14
+Bratislava|-17
+Bucarest|21
+Sofia|3
+Belgrado|-19
+Zagreb|10
+Kiev|-12
+Moscú|-8
+San Petersburgo|7
+Nueva York|15
+Los Ángeles|12
+Chicago|18
+Houston|27
+Miami|28
+Toronto|16
+Montreal|14
+Vancouver|12
+Ciudad de México|22
+Buenos Aires|24
+Santiago de Chile|20
+Lima|19
+Rio de Janeiro|26
+Sao Paulo|23
+Bogotá|18
+Caracas|25
+La Habana|27
+San Juan|28
