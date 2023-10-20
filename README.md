@@ -4,6 +4,12 @@ Sistemas distribuidos práctica de drones
 **links de interes**
 https://andres-plazas.medium.com/leer-y-escribir-datos-en-kafka-usando-python-2696154c3948
 
+**Puertos de los modulos**
+AD_Drone = 5050
+AD_Registry = 6050
+AD_Wheather = 7050
+AD_Engine = 8050
+
 Paso a paso de la práctica:
 
 El engine entra en modo de escucha, hasta que un fichero le dará la información de la figura con un formato concreto,

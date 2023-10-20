@@ -15,14 +15,12 @@ HEADER = 64
 FORMAT = 'utf-8'
 PORT = 5050
 
-# Manejo de ficheros
-def file_manipulation(name, mode):
-  try:
-    file = open(name, mode)
-    return file
-  except OSError as err:
-    print("Error: {0}".format(err))
-  return
+def manejoDrones():
+    # conexion con AD_Drone mediante socket
+    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server.bind(ADDR)
+    server.listen()
+    print(f"AD_Engine escuchando en  {SERVER}")
 
 def manejoFichero(maxDrones):
    
@@ -54,10 +52,10 @@ def manejoMapa(mapaBytes):
     strMapa = ""
 
     for fila in mapaBytes:
-      strMapa = strMapa + "| "
-      for elemento in fila:
-         strMapa = strMapa + "[" + "E," + str(elemento) + "] "
-      strMapa = strMapa + "|\n"
+        strMapa = strMapa + "| "
+        for elemento in fila:
+            strMapa = strMapa + "[" + "E," + str(elemento) + "] "
+        strMapa = strMapa + "|\n"
    
     print(strMapa)
 
@@ -75,21 +73,16 @@ def mandar_mapa(mapa):
 print ("Bienvenido al AD_Engine")
 
 
-#usaremos 6 argumentos, la BBDD no necesita de conexion
-# Puerto de escucha del engine
+#usaremos 5 argumentos, la BBDD no necesita de conexion
 # número máximo de drones
 # IP y puerto del Broker
 # IP y puerto del AD_Wheather
-if  (len(sys.argv) == 7):
-    PORT = int(sys.argv[1])
+if  (len(sys.argv) == 6):
+    
+    # zona de argumentos
+
     SERVER = socket.gethostbyname(socket.gethostname())
     ADDR = (SERVER,PORT)
-
-    manejoFichero(int(sys.argv[2]))
-
-    mapaBytes = [[0 for _ in range(20)] for _ in range(20)]
-
-    strMapa = manejoMapa(mapaBytes)
 
     IP_BROKER = sys.argv[3]
     PORT_BROKER = int(sys.argv[4])
@@ -100,6 +93,17 @@ if  (len(sys.argv) == 7):
     PORT_WEATHER= int(sys.argv[6])
     
     ADDR_WEATHER = (IP_WEATHER, PORT_WEATHER)
+
+    # zona de funciones
+
+    manejoFichero(int(sys.argv[2]))
+
+    mapaBytes = [[0 for _ in range(20)] for _ in range(20)]
+
+    strMapa = manejoMapa(mapaBytes)
+
+    manejoDrones()
+
     
 else:
     print ("Oops!. Parece que algo falló. Necesito estos argumentos: <Puerto> <Max_Drones> <IP_Broker> <Puerto_Broker> <IP_Weather> <Puerto_Weather>")
