@@ -18,3 +18,10 @@ https://tecnops.es/tutorial-de-python-parte-4/
 
 chatGPT información del fichero
 https://chat.openai.com/c/2ff0a61f-7550-4bb3-81a4-60c34c7fffe8
+
+
+Si apagamos el servidor de clima, pillar la última temperatura y los drones deberán seguir
+
+Utilizar timeout para verificar si un dron está o no disponible, si todos los demás completan la figura menos este
+
+para la comunicación dron-engine, no hacer ningún movimiento hasta que el engine devuelva el mapa actualizado, después se levantará el engine
