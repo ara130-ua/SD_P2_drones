@@ -4,6 +4,9 @@ import sys
 import sqlite3
 import datetime
 
+import numpy as np
+import matplotlib.pyplot as plt
+
 #def consulta_Clima():
     
 HEADER = 64
@@ -35,13 +38,27 @@ def manejoFichero(maxDrones):
       #Eliminamos espacios en blanco
         linea = linea.strip()
         if linea:
-            elementos = linea.split()
+            elementos = linea.split('-')
 
             if len(elementos) == 3:
-                datos_drones.append((int(elementos[0]), float(elementos[1]), float(elementos[2])))            
+                datos_drones.append((int(elementos[0]), (int(elementos[1]), int(elementos[2]))))            
 
    # cerramos el fichero
+    print(datos_drones)
     return(datos_drones)
+
+def manejoMapa(mapaBytes):
+    strMapa = ""
+
+    for fila in mapaBytes:
+      strMapa = strMapa + "| "
+      for elemento in fila:
+         strMapa = strMapa + "[" + "E," + str(elemento) + "] "
+      strMapa = strMapa + "|\n"
+   
+    print(strMapa)
+
+    return(strMapa)
 
 
 ####main#####
@@ -53,12 +70,16 @@ print ("Bienvenido al AD_Engine")
 # número máximo de drones
 # IP y puerto del Broker
 # IP y puerto del AD_Wheather
-if  (len(sys.argv) == 6):
+if  (len(sys.argv) == 7):
     PORT = int(sys.argv[1])
-    SERVER = socket.gethostbyname(socket.gethostbyname())
+    SERVER = socket.gethostbyname(socket.gethostname())
     ADDR = (SERVER,PORT)
 
-    manejoFichero(MAX_DRONES = int(sys.argv[2]))
+    manejoFichero(int(sys.argv[2]))
+
+    mapaBytes = [[0 for _ in range(20)] for _ in range(20)]
+
+    strMapa = manejoMapa(mapaBytes)
 
     IP_BROKER = sys.argv[3]
     PORT_BROKER = int(sys.argv[4])
@@ -70,20 +91,5 @@ if  (len(sys.argv) == 6):
     
     ADDR_WEATHER = (IP_WEATHER, PORT_WEATHER)
     
-    client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    client.connect(ADDR)
-    print (f"Establecida conexión en [{ADDR}]")
-
-    msg=sys.argv[3]
-    while msg != FIN :
-        print("Envio al servidor: ", msg)
-        send(msg)
-        print("Recibo del Servidor: ", client.recv(2048).decode(FORMAT))
-        msg=input()
-
-    print ("SE ACABO LO QUE SE DABA")
-    print("Envio al servidor: ", FIN)
-    send(FIN)
-    client.close()
 else:
     print ("Oops!. Parece que algo falló. Necesito estos argumentos: <Puerto> <Max_Drones> <IP_Broker> <Puerto_Broker> <IP_Weather> <Puerto_Weather>")
