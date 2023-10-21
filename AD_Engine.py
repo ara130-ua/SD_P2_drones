@@ -15,12 +15,15 @@ HEADER = 64
 FORMAT = 'utf-8'
 PORT = 5050
 
-def manejoDrones():
-    # conexion con AD_Drone mediante socket
+def manejoClima(ipClima, puertoClima):
+    # conexion con AD_Weather mediante socket
+    ADDR_WEATHER = (ipClima, puertoClima)
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server.bind(ADDR)
+    server.bind(ADDR_WEATHER)
     server.listen()
-    print(f"AD_Engine escuchando en  {SERVER}")
+    print(f"AD_Engine escuchando en  {ADDR_WEATHER}")
+
+
 
 def manejoFichero(maxDrones):
    
@@ -89,11 +92,6 @@ if  (len(sys.argv) == 6):
 
     ADDR_BROKER = (IP_BROKER, PORT_BROKER)
 
-    IP_WEATHER= sys.argv[5]
-    PORT_WEATHER= int(sys.argv[6])
-    
-    ADDR_WEATHER = (IP_WEATHER, PORT_WEATHER)
-
     # zona de funciones
 
     manejoFichero(int(sys.argv[2]))
@@ -102,7 +100,8 @@ if  (len(sys.argv) == 6):
 
     strMapa = manejoMapa(mapaBytes)
 
-    manejoDrones()
+    # thread = threading.Thread(target=manejoClima, args=(sys.argv[5], int(sys.argv[6])))
+    # thread.start()
 
     
 else:
