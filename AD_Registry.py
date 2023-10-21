@@ -30,7 +30,7 @@ def create_Dron(alias):
         print("Error al crear el dron")
         conexion.close()
 
-        return "hola", "monada"
+        return "Error", "Base de datos"
 
 def manejo_dron(conn, addr):
     print(f"Se ha conectado el dron {addr}")

@@ -2,12 +2,12 @@ import socket
 import random
 import time
 
-SERVER = '127.0.0.1'
-PORT = 7050
+SERVER = socket.gethostbyname(socket.gethostname())
+PORT = 5050
 FORMAT = 'utf-8'
 HEADER = 64
 
-def send(msg, clientE):
+def send(msg, cliente):
     message = msg.encode(FORMAT)
     msg_length = len(message)
     send_length = str(msg_length).encode(FORMAT)
@@ -16,7 +16,32 @@ def send(msg, clientE):
     print("Enviando mensaje: ", message)
     cliente.send(message)
 
-def manejoClima():
+def conexionEngine():
+    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server.bind((SERVER, PORT))
+    server.listen()
+    print(f"AD_Weather escuchando en {SERVER}")
+    conn, addr = server.accept()
+    manejoClima(conn, addr)
+
+
+def manejoClima(conn, addr):
+    print(f"Se ha conectado el AD_Engine {addr}")
+    conectado = True
+    while conectado:
+        try:
+            msg_length = conn.recv(HEADER).decode(FORMAT)
+        except Exception as exc:
+            print("Se ha cerrado la conexión inesperadamente")
+            conn.close()
+        if msg_length:
+            print("Se ha recibido del AD_Engine una petición de clima")
+            strDatosClima = str(random.choice(datosClima))
+            send(strDatosClima, conn)
+            print("Se ha enviado el clima al AD_Engine")
+            time.sleep(10)
+    
+def manejoFicheroClima():
     with open('clima.txt', 'r') as archivo:
         lineas = archivo.readlines()
 
@@ -28,27 +53,16 @@ def manejoClima():
             elementos = linea.split('|')
 
             if len(elementos) == 2:
-                datos_clima.append(str(elementos[0]), int(elementos[1]))
+                datos_clima.append((str(elementos[0]), int(elementos[1])))
     
     return(datos_clima)
 
 
 # main
 print("Bienvenido al AD_Wheather")
+datosClima = manejoFicheroClima()
+conexionEngine()
 
-cliente = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-ADDR = (SERVER, PORT)
-cliente.connect(ADDR)
-print(f"Se ha establecido conexión en [{ADDR}]")
-
-datos_clima = manejoClima()
-
-# elegimos un clima aleatorio y cada cierto tiempo lo enviamos al AD_Engine
-
-while True:
-    clima = random.choice(datos_clima)
-    send(clima, cliente)
-    time.sleep(10) # mirar luego el tiempo de envio
 
 
 

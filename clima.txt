@@ -13,7 +13,7 @@ Bruselas|12
 Helsinki|-10
 Oslo|-8
 Estocolmo|-9
-Copenhague|11client
+Copenhague|11
 Praga|10
 Budapest|3
 Varsovia|-13
