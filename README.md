@@ -42,3 +42,5 @@ kafka-topics.sh --delete --topic <nombre-del-topico> --bootstrap-server <tu-serv
 #### cosas por hacer conexión clima-engine ####
 
 leer la última fila añadida a la tabla weather y parar el espectáculo cuando la temperatura sea menor que cero
+
+Revisar las variables de entorno
