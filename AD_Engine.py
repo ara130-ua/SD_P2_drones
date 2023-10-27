@@ -59,15 +59,15 @@ def climaBBDD(datos_clima):
     temperatura = tuplaClima[1]
     conexion = sqlite3.connect("bd1.db")
 
-    try:
+    #try:
         # comprobar los tipos de datos de nombre y de temperatura
-        conexion.execute("insert into weather(nombre, temperatura) values ('"+nombreCiudad+"',"+temperatura+")")
-        conexion.commit()
-        return("ciudad añadida a la BBDD")
-    except sqlite3.OperationalError:
-        print("Error al añadir la ciudad a la BBDD")
-        conexion.close()
-        return "Error", "Base de datos"
+    conexion.execute("insert into weather(nombre, temperatura) values ('"+nombreCiudad+"',"+str(temperatura)+")")
+    conexion.commit()
+    return("ciudad añadida a la BBDD")
+    #except sqlite3.OperationalError:
+    #    print("Error al añadir la ciudad a la BBDD")
+    #    conexion.close()
+    #    return "Error", "Base de datos"
 
 ### Funciones de BBDD ###
 
@@ -159,6 +159,7 @@ print ("Bienvenido al AD_Engine")
 
 #usaremos 5 argumentos, la BBDD no necesita de conexion
 # número máximo de drones
+# puerto del AD_Engine
 # IP y puerto del Broker
 # IP y puerto del AD_Wheather
 if  (len(sys.argv) == 6):

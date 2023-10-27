@@ -7,6 +7,7 @@ PORT = 5050
 FORMAT = 'utf-8'
 HEADER = 64
 
+# Añadir manejo de excepciones por si se cae el AD_Engine
 def send(msg, cliente):
     message = msg.encode(FORMAT)
     msg_length = len(message)
@@ -58,21 +59,11 @@ def manejoFicheroClima():
     return(datos_clima)
 
 
+
 # main
+# Añadir el puerto del AD_Wheather
+
 print("Bienvenido al AD_Wheather")
 datosClima = manejoFicheroClima()
 conexionEngine()
-
-
-
-
-
-
-
-
-
-
-
-
-
 
