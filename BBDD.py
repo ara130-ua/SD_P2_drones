@@ -14,7 +14,7 @@ except sqlite3.OperationalError:
 
 try:
     #tabla weather (clima)
-    conexion.execute("create table weather (nombre text primary key, temperatura real)")
+    conexion.execute("create table weather (id integer primary key autoincrement, nombre text primary key, temperatura real)")
     print("se creo la tabla weather")
 except sqlite3.OperationalError:
     print("La tabla weather ya existe")
