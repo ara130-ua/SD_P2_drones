@@ -1,6 +1,6 @@
 import sqlite3
 
-conexion = sqlite3.connect("bd2.db")
+conexion = sqlite3.connect("bd1.db")
 
 try:
     #tabla drones

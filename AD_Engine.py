@@ -61,7 +61,7 @@ def climaBBDD(datos_clima):
 
     try:
         # comprobar los tipos de datos de nombre y de temperatura
-        conexion.execute("insert into clima1 (nombre, temperatura) values ('"+nombreCiudad+"',"+str(temperatura)+")")
+        conexion.execute("insert into weather (nombre, temperatura) values ('"+nombreCiudad+"',"+str(temperatura)+")")
         conexion.commit()
         conexion.close()
         return("ciudad añadida a la BBDD")
@@ -69,6 +69,18 @@ def climaBBDD(datos_clima):
         print("Error al añadir la ciudad a la BBDD")
         conexion.close()
         return "Error", "Base de datos"
+    
+
+def leerUltFilaClima():
+    # nos conectamos a la BBDD y leemos la última fila
+    conexion = sqlite3.connect("bd1.db")
+    cursor = conexion.cursor()
+    cursor.execute("select * from weather order by id desc limit 1")
+    ultimaFila = cursor.fetchone()
+    conexion.close()
+    # convertimos los datos a una tupla y la devolvemos
+    datosClimaActual = ultimaFila[1], ultimaFila[2]
+    return datosClimaActual
 
 ### Funciones de BBDD ###
 
