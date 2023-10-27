@@ -38,3 +38,6 @@ kafka-topics.sh --list --bootstrap-server <tu-servidor-kafka>
 
 PARA BORRAR UN TOPIC 
 kafka-topics.sh --delete --topic <nombre-del-topico> --bootstrap-server <tu-servidor-kafka>
+
+
+Revisar las variables de entorno
