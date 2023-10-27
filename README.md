@@ -38,3 +38,7 @@ kafka-topics.sh --list --bootstrap-server <tu-servidor-kafka>
 
 PARA BORRAR UN TOPIC 
 kafka-topics.sh --delete --topic <nombre-del-topico> --bootstrap-server <tu-servidor-kafka>
+
+#### cosas por hacer conexión clima-engine ####
+
+leer la última fila añadida a la tabla weather y parar el espectáculo cuando la temperatura sea menor que cero

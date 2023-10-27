@@ -1,6 +1,6 @@
 import sqlite3
 
-conexion = sqlite3.connect("bd1.db")
+conexion = sqlite3.connect("bd2.db")
 
 try:
     #tabla drones
@@ -14,7 +14,7 @@ except sqlite3.OperationalError:
 
 try:
     #tabla weather (clima)
-    conexion.execute("create table weather (id integer primary key autoincrement, nombre text primary key, temperatura real)")
-    print("se creo la tabla weather")
+    conexion.execute("create table weather (id integer primary key autoincrement, nombre text, temperatura real)")
+    print("se creo la tabla wheater")
 except sqlite3.OperationalError:
-    print("La tabla weather ya existe")
+    print("La tabla wheather ya existe")
