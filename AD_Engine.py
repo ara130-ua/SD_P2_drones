@@ -4,6 +4,7 @@ import sys
 import sqlite3
 import datetime
 import time
+import json
 from kafka import KafkaProducer
 from json import dumps
 from kafka import KafkaConsumer
@@ -59,15 +60,28 @@ def climaBBDD(datos_clima):
     temperatura = tuplaClima[1]
     conexion = sqlite3.connect("bd1.db")
 
-    #try:
+    try:
         # comprobar los tipos de datos de nombre y de temperatura
-    conexion.execute("insert into weather(nombre, temperatura) values ('"+nombreCiudad+"',"+str(temperatura)+")")
-    conexion.commit()
-    return("ciudad añadida a la BBDD")
-    #except sqlite3.OperationalError:
-    #    print("Error al añadir la ciudad a la BBDD")
-    #    conexion.close()
-    #    return "Error", "Base de datos"
+        conexion.execute("insert into weather (nombre, temperatura) values ('"+nombreCiudad+"',"+str(temperatura)+")")
+        conexion.commit()
+        conexion.close()
+        return("ciudad añadida a la BBDD")
+    except sqlite3.OperationalError:
+        print("Error al añadir la ciudad a la BBDD")
+        conexion.close()
+        return "Error", "Base de datos"
+    
+
+def leerUltFilaClima():
+    # nos conectamos a la BBDD y leemos la última fila
+    conexion = sqlite3.connect("bd1.db")
+    cursor = conexion.cursor()
+    cursor.execute("select * from weather order by id desc limit 1")
+    ultimaFila = cursor.fetchone()
+    conexion.close()
+    # convertimos los datos a una tupla y la devolvemos
+    datosClimaActual = ultimaFila[1], ultimaFila[2]
+    return datosClimaActual
 
 ### Funciones de BBDD ###
 
@@ -102,44 +116,68 @@ def manejoClima(conn, addr):
 
 ### Funciones que manejan el fichero de drones y el mapa ###
 
-def manejoFichero(maxDrones):
+def manejoFichero():
    
-    fileWrite = 'figura.txt'
-    datos_drones = []
+    with open('AwD_figuras.json', 'r') as archivo:
+        # cargamos el archivo json
+        json_data = json.load(archivo)
 
-   # Una manera de sacar el contenido en una string
-   #f = file_manipulation(fileWrite, 'r')
-   #contenido = f.read()
-   
-   # sacamos la información en lineas de los drones
-    with open(fileWrite, 'r') as archivo:
-        lineas = archivo.readlines()
+        figuras = json_data["figuras"]
+        lista_inicial = []
+        # Iteramos sobre figuras
+        for figura in figuras:
 
-    for linea in lineas:
-      #Eliminamos espacios en blanco
-        linea = linea.strip()
-        if linea:
-            elementos = linea.split('-')
+            info_dron = []
+            lista_figura = []
 
-            if len(elementos) == 3:
-                datos_drones.append((int(elementos[0]), (int(elementos[1]), int(elementos[2]))))            
+            lista_figura.append(figura["Nombre"])
+            drones = figura["Drones"]
+            bucleFigura = True
+            # Utilizamos el booleano para que no se hagan duplicados
+            for dron in drones:
+                if(bucleFigura):
+                    dron_id = dron["ID"]
+                    pos_x, pos_y = map(int, dron["POS"].split(","))
+                    if dron_id == 1 and len(info_dron) > 1:
+                        bucleFigura = False
+                    else:
+                        info_dron.append((dron_id, (pos_x, pos_y)))
 
-   # cerramos el fichero
-    print(datos_drones)
-    return(datos_drones)
+            lista_figura.append(info_dron)
+            lista_inicial.append(lista_figura)
+            
+    return(lista_inicial)
 
-def manejoMapa(mapaBytes):
+# dronMov = [E,ID,(X,Y)]
+def manejoMapa(isMoved = False, dronMov = []):
+    mapaBytes = [[0 for _ in range(20)] for _ in range(20)]
+    listaMapa = []
+  
+    for coordX in mapaBytes:
+        listaCoordX = []
+        for coordY in coordX:
+            listaCoordX.append(('E', 0))
+        listaMapa.append(listaCoordX)
+
+    if isMoved:
+        estado = dronMov[0]
+        Id = dronMov[1]
+        movimiento = (dronMov[2][0]-1, dronMov[2][1]-1)
+        
+        listaMapa[movimiento[0]][movimiento[1]] = (estado, Id)
+
+
+    return(listaMapa)
+
+def stringMapa(listaMapa):
     strMapa = ""
-
-    for fila in mapaBytes:
+    for fila in listaMapa:
         strMapa = strMapa + "| "
         for elemento in fila:
-            strMapa = strMapa + "[" + "E," + str(elemento) + "] "
+            strMapa = strMapa + "[" + elemento[0] + "," + str(elemento[1]) + "] "
         strMapa = strMapa + "|\n"
-   
-    print(strMapa)
 
-    return(strMapa)
+    return strMapa
 
 def mandar_mapa(mapa):
     producer = KafkaProducer(
@@ -171,15 +209,28 @@ if  (len(sys.argv) == 6):
 
     ADDR_BROKER = (IP_BROKER, PORT_BROKER)
 
+    print("Bienvenido al AD_Engine")
+    programaActive = True
+    figuras = manejoFichero()
+    while(programaActive):
+        print("Elige una opción:")
+        print("1. Ver figuras disponibles")
+        print("2. Salir")
+        opcion = input()
+        if(opcion == "1"):
+            iterador = 1
+            for figura in figuras:
+                print("Selecciona una figura: ")
+                print(str(iterador) + ". " + figura[0])
+                iterador = iterador + 1
+            opcionFigura = input()
+        elif(opcion == "2"):
+            print("Saliendo del programa")
+            programaActive = False
+        else:
+            print("Opción no válida")
 
-
-    # zona de funciones
-
-    manejoFichero(int(sys.argv[2]))
-
-    mapaBytes = [[0 for _ in range(20)] for _ in range(20)]
-
-    strMapa = manejoMapa(mapaBytes)
+    strMapa = manejoMapa()
 
     IP_WEATHER = socket.gethostbyname(socket.gethostname())
 
