@@ -41,7 +41,7 @@ def consumidor_mapas(id_dron, pos_actual, pos_final):
                 productor("finish")
         
 
-def isMapaActualizado(mapa):
+def isMapaActualizado(mapa, pos_actual):
     #comprueba si el mapa es el actualizado
     return True
 
