@@ -158,7 +158,7 @@ def manejoFichero():
     return(lista_inicial)
 
 # dronMov = [E,ID,(X,Y)]
-def manejoMapa(isMoved = False, dronMov = []):
+def crearMapa():
     mapaBytes = [[0 for _ in range(20)] for _ in range(20)]
     listaMapa = []
   
@@ -168,15 +168,15 @@ def manejoMapa(isMoved = False, dronMov = []):
             listaCoordX.append(('E', 0))
         listaMapa.append(listaCoordX)
 
-    if isMoved:
-        estado = dronMov[0]
-        Id = dronMov[1]
-        movimiento = (dronMov[2][0]-1, dronMov[2][1]-1)
-        
-        listaMapa[movimiento[0]][movimiento[1]] = (estado, Id)
-
-
     return(listaMapa)
+
+def actualizarMapa(listaMapa, dronMov):
+    estado = dronMov[0]
+    Id = dronMov[1]
+    movimiento = (dronMov[2][0]-1, dronMov[2][1]-1)
+    
+    listaMapa[movimiento[0]][movimiento[1]] = (estado, Id)
+
 
 def stringMapa(listaMapa):
     strMapa = ""
