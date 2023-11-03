@@ -5,6 +5,7 @@ import sqlite3
 import datetime
 import time
 import json
+import os
 from kafka import KafkaProducer
 from json import dumps
 from kafka import KafkaConsumer
@@ -191,10 +192,6 @@ def mandar_mapa(mapa):
 
 #----------------------------------------------------------#
 
-####main#####
-print ("Bienvenido al AD_Engine")
-
-
 #usaremos 5 argumentos, la BBDD no necesita de conexion
 # número máximo de drones
 # puerto del AD_Engine
@@ -210,31 +207,88 @@ if  (len(sys.argv) == 6):
     ADDR_BROKER = (IP_BROKER, PORT_BROKER)
 
     print("Bienvenido al AD_Engine")
-    programaActive = True
+    programaActiveBool = True
     figuras = manejoFichero()
-    while(programaActive):
+    # Bucle de menú principal
+    while(programaActiveBool):
         print("Elige una opción:")
         print("1. Ver figuras disponibles")
         print("2. Salir")
         opcion = input()
+
         if(opcion == "1"):
-            iterador = 1
-            for figura in figuras:
+            os.system("clear")
+            # bucle de figuras
+            programaFigurasBool = True
+            while(programaFigurasBool):
+                iterador = 1
                 print("Selecciona una figura: ")
-                print(str(iterador) + ". " + figura[0])
-                iterador = iterador + 1
-            opcionFigura = input()
+                for figura in figuras:
+                    print(str(iterador) + ". " + figura[0])
+                    iterador = iterador + 1
+                print(str(iterador) + ". Salir")
+                opcionFigura = input()
+                
+                try:
+                    if(int(opcionFigura) < iterador and int(opcionFigura) > 0):
+                        os.system("clear")
+                        opcFiguraSelecBool = True
+                        while(opcFiguraSelecBool):
+                            print("Has seleccionado la figura: " + str(figuras[int(opcionFigura)-1][0]))
+                            print("Elige una opción:")
+                            print("1. Ver la figura final")
+                            print("2. Ver la figura simplificada")
+                            print("3. Comenzar el espectaculo directamente")
+                            print("4. Salir")
+                            opcionFiguraSelec = input()
+
+                            if(opcionFiguraSelec == "1"):
+                                os.system("clear")
+                                print("Mostrando figura final")
+                                # mostrar figura final
+                            elif(opcionFiguraSelec == "2"):
+                                os.system("clear")
+                                print("Mostrando figura simplificada")
+                                # mostrar figura simplificada
+                                print(figuras[int(opcionFigura)-1][1])
+                            elif(opcionFiguraSelec == "3"):
+                                os.system("clear")
+                                print("Comenzando espectaculo")
+                                # comenzar espectaculo
+
+                                opcFiguraSelecBool = False
+                            elif(opcionFiguraSelec == "4"):
+                                os.system("clear")
+                                print("Saliendo de la figura seleccionada")
+                                opcFiguraSelecBool = False
+                            else:
+                                os.system("clear")
+                                print("Opción no válida")
+                
+                    elif(opcionFigura == str(iterador)):
+                        os.system("clear")
+                        print("Saliendo de la selección de figuras")
+                        programaFigurasBool = False
+                    else:
+                        os.system("clear")
+                        print("Opción no válida")
+                except ValueError:
+                    os.system("clear")
+                    print("Opción no válida")
+
         elif(opcion == "2"):
+            os.system("clear")
             print("Saliendo del programa")
-            programaActive = False
+            programaActiveBool = False
         else:
+            os.system("clear")
             print("Opción no válida")
 
-    strMapa = manejoMapa()
+    #strMapa = manejoMapa()
 
-    IP_WEATHER = socket.gethostbyname(socket.gethostname())
+    #IP_WEATHER = socket.gethostbyname(socket.gethostname())
 
-    conexionClima(IP_WEATHER, sys.argv[5])
+    #conexionClima(IP_WEATHER, sys.argv[5])
 
     
 else:
