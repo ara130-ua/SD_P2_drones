@@ -33,14 +33,18 @@ def send(msg, client):
     client.send(message)
 
 def receive(client):
-    msg_length = client.recv(HEADER).decode(FORMAT)
-    if msg_length:
-        msg_length = int(msg_length)
-        msg = client.recv(msg_length).decode(FORMAT)
-        print(f"Se ha recibido del servidor: {msg}")
-        return msg
-    else:
-        print("No se ha recibido nada del servidor")
+    try:
+        msg_length = client.recv(HEADER).decode(FORMAT)
+        if msg_length:
+            msg_length = int(msg_length)
+            msg = client.recv(msg_length).decode(FORMAT)
+            print(f"Se ha recibido del servidor: {msg}")
+            return msg
+        else:
+            print("No se ha recibido nada del servidor")
+            return None
+    except:
+        print("No se ha encontrado servidor o se ha caido")
         return None
     
 ### Funciones de servidor ###
@@ -107,9 +111,13 @@ def manejoClima(conn, addr):
         # para compartir la información entre los hilos
         # habrá que guardar los datos en la BBDD
         datos_clima = receive(conn)
+        if(datos_clima == None):
+            conectado = False
+            break
         print(f"Se ha recibido del AD_Weather {addr} los datos de clima: {datos_clima}")
         # guardar en la BBDD
         print(climaBBDD(datos_clima))
+    print(f"Se ha cerrado la conexión con el AD_Weather {addr}")
 
 ### Funciones que manejan la conexion con el AD_Wheather ###
 
@@ -256,6 +264,11 @@ if  (len(sys.argv) == 6):
                                 print("Comenzando espectaculo")
                                 # comenzar espectaculo
 
+                                print("Servidor clima")
+
+                                IP_WEATHER = socket.gethostbyname(socket.gethostname())
+                                conexionClima(IP_WEATHER, sys.argv[5])
+
                                 opcFiguraSelecBool = False
                             elif(opcionFiguraSelec == "4"):
                                 os.system("clear")
@@ -286,9 +299,6 @@ if  (len(sys.argv) == 6):
 
     #strMapa = manejoMapa()
 
-    #IP_WEATHER = socket.gethostbyname(socket.gethostname())
-
-    #conexionClima(IP_WEATHER, sys.argv[5])
 
     
 else:

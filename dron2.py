@@ -6,6 +6,8 @@ import time
 import random
 import sys
 
+IP_KAFKA = "192.168.221.179"
+
 def consumidor_primerMapa(id_dron):
     consumer = KafkaConsumer(
         'mapas-topic',
@@ -13,7 +15,7 @@ def consumidor_primerMapa(id_dron):
         enable_auto_commit=True,
         group_id = id_dron,
         value_deserializer=lambda m: loads(m.decode('utf-8')),
-        bootstrap_servers=['localhost:9092'])
+        bootstrap_servers=[IP_KAFKA + ':9092'])
 
     #devuelve el primer mapa
     for m in consumer:
@@ -29,7 +31,7 @@ def consumidor_mapas(id_dron, pos_actual, pos_final):
         enable_auto_commit=True,
         group_id = id_dron,
         value_deserializer=lambda m: loads(m.decode('utf-8')),
-        bootstrap_servers=['localhost:9092'])
+        bootstrap_servers=[IP_KAFKA + ':9092'])
     
     for m in consumer:
         print(m.value) #imprime un mapa
@@ -49,7 +51,7 @@ def isMapaActualizado(mapa, pos_actual):
 def productor(movimiento):
     producer = KafkaProducer(
         value_serializer=lambda m: dumps(m).encode('utf-8'),
-        bootstrap_servers=['localhost:9092'])
+        bootstrap_servers=[IP_KAFKA + ':9092'])
 
     producer.send("movimientos-topic", value=movimiento)
     time.sleep(1)
@@ -72,15 +74,31 @@ def run(pos_actual, pos_final):
     print("Posicion actualizada -->" + str((posInt_X, posInt_Y)))
 
     return (posInt_X, posInt_Y)
+
+def stringMapa(listaMapa):
+    strMapa = ""
+    for fila in listaMapa:
+        strMapa = strMapa + "| "
+        for elemento in fila:
+            strMapa = strMapa + "[" + elemento[0] + "," + str(elemento[1]) + "] "
+        strMapa = strMapa + "|\n"
+
+    return strMapa
     
-def saca_pos_final(mapa, id_dron):
+def saca_pos_final(listaFigura, id_dron):
     #saca la posicion final del mapa
     #el mapa tiene que tener el siguiente formato: "id_dron-posX-posY#id_dron-posX-posY#..."
 
-    posiciones = mapa.split("#")
-    for p in posiciones:
-        if(p.split("-")[0] == str(id_dron)):
-            return (int(p.split("-")[1]), int(p.split("-")[2]))
+    #posiciones = mapa.split("#")
+    #for p in posiciones:
+    #    if(p.split("-")[0] == str(id_dron)):
+    #        return (int(p.split("-")[1]), int(p.split("-")[2]))
+
+    for dron in listaFigura:
+        if(dron[0] == id_dron):
+            return dron[1]
+
+
 
 
 

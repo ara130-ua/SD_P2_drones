@@ -102,5 +102,6 @@ def stringMapa(listaMapa):
 ##main
 print("Bienvenido al AD_Engine")
 data = manejoMapa(True, ['R',4,(4,4)])
+print(data)
 
 print(stringMapa(data))

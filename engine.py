@@ -3,6 +3,7 @@ from kafka import KafkaConsumer
 from kafka import KafkaProducer
 from json import loads
 from json import dumps
+import json
 
 IP_Kafka = "192.168.221.179"
 
@@ -40,9 +41,83 @@ def productor(mapa):
     time.sleep(1)
 
 
+#----------------------------------------------------------#
+
+### Funciones que manejan el fichero de drones y el mapa ###
+
+def manejoFichero():
+   
+    with open('AwD_figuras.json', 'r') as archivo:
+        # cargamos el archivo json
+        json_data = json.load(archivo)
+
+        figuras = json_data["figuras"]
+        lista_inicial = []
+        # Iteramos sobre figuras
+        for figura in figuras:
+
+            info_dron = []
+            lista_figura = []
+
+            lista_figura.append(figura["Nombre"])
+            drones = figura["Drones"]
+            bucleFigura = True
+            # Utilizamos el booleano para que no se hagan duplicados
+            for dron in drones:
+                if(bucleFigura):
+                    dron_id = dron["ID"]
+                    pos_x, pos_y = map(int, dron["POS"].split(","))
+                    if dron_id == 1 and len(info_dron) > 1:
+                        bucleFigura = False
+                    else:
+                        info_dron.append((dron_id, (pos_x, pos_y)))
+
+            lista_figura.append(info_dron)
+            lista_inicial.append(lista_figura)
+            
+    return(lista_inicial)
+
+# dronMov = [E,ID,(X,Y)]
+def manejoMapa(isMoved = False, dronMov = []):
+    mapaBytes = [[0 for _ in range(20)] for _ in range(20)]
+    listaMapa = []
+  
+    for coordX in mapaBytes:
+        listaCoordX = []
+        for coordY in coordX:
+            listaCoordX.append(('E', 0))
+        listaMapa.append(listaCoordX)
+
+    if isMoved:
+        estado = dronMov[0]
+        Id = dronMov[1]
+        movimiento = (dronMov[2][0]-1, dronMov[2][1]-1)
+        
+        listaMapa[movimiento[0]][movimiento[1]] = (estado, Id)
+
+
+    return(listaMapa)
+
+def stringMapa(listaMapa):
+    strMapa = ""
+    for fila in listaMapa:
+        strMapa = strMapa + "| "
+        for elemento in fila:
+            strMapa = strMapa + "[" + elemento[0] + "," + str(elemento[1]) + "] "
+        strMapa = strMapa + "|\n"
+
+    return strMapa
+
+
+#----------------------------------------------------------#
+
+### Funciones que manejan el fichero de drones y el mapa ###
+
+
 #### main ####
 num_drones = 2
-mapa = "1-5-9#2-5-4#3-5-9#4-2-0#5-1-4#6-9-9#7-5-9#8-5-9#9-5-9"
+lista_mapa = manejoMapa()
+mapa = stringMapa(lista_mapa)
 #envia el mapa 
 productor(mapa)
 
