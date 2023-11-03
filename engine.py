@@ -5,9 +5,9 @@ from json import loads
 from json import dumps
 import json
 
-IP_Kafka = "192.168.221.179"
+IP_Kafka = "localhost"
 
-def consumidor(num_drones):
+def consumidor(listaMapa, num_drones):
     consumer = KafkaConsumer(
         'movimientos-topic',
         auto_offset_reset='earliest',
@@ -21,22 +21,22 @@ def consumidor(num_drones):
     for m in consumer: 
         if(m.value == "finish"):
             finalizados = finalizados +1
+        else:
+            listaMapa = actualizaMapa(listaMapa, m.value)
+            productor(listaMapa)
+            
         if(finalizados == num_drones):
             return True
         
-        actualiza_mapa(m.value)
+        
 
-def actualiza_mapa(movimiento):
-    print ("Movimiento recibido: " + movimiento)
-    mapa = "Esto es un mapa actualizado con el movimiento: " + str(movimiento) 
-    productor(mapa)
 
 def productor(mapa):
     producer = KafkaProducer(
         value_serializer=lambda m: dumps(m).encode('utf-8'),
         bootstrap_servers=[IP_Kafka + ':9092'])
     
-    print("Mapa enviado: " + mapa)
+    print("Mapa enviado: " + str(mapa))
     producer.send("mapas-topic", value=mapa)
     time.sleep(1)
 
@@ -77,8 +77,8 @@ def manejoFichero():
             
     return(lista_inicial)
 
-# dronMov = [E,ID,(X,Y)]
-def manejoMapa(isMoved = False, dronMov = []):
+
+def crearMapa():
     mapaBytes = [[0 for _ in range(20)] for _ in range(20)]
     listaMapa = []
   
@@ -88,15 +88,15 @@ def manejoMapa(isMoved = False, dronMov = []):
             listaCoordX.append(('E', 0))
         listaMapa.append(listaCoordX)
 
-    if isMoved:
-        estado = dronMov[0]
-        Id = dronMov[1]
-        movimiento = (dronMov[2][0]-1, dronMov[2][1]-1)
-        
-        listaMapa[movimiento[0]][movimiento[1]] = (estado, Id)
-
-
     return(listaMapa)
+
+# dronMov = ['R',ID,(X,Y)]
+def actualizaMapa(listaMapa, dronMov):
+    estado = dronMov[0]
+    Id = dronMov[1]
+    movimiento = (int(dronMov[2][0])-1, int(dronMov[2][1])-1)
+    listaMapa[movimiento[0]][movimiento[1]] = (estado, Id)
+    return listaMapa
 
 def stringMapa(listaMapa):
     strMapa = ""
@@ -116,11 +116,11 @@ def stringMapa(listaMapa):
 
 #### main ####
 num_drones = 2
-lista_mapa = manejoMapa()
-mapa = stringMapa(lista_mapa)
+lista_mapa = manejoFichero()[0][1]
+
 #envia el mapa 
-productor(mapa)
+productor(lista_mapa)
 
 #empieza a recoger los movimientos de los drones
-if(consumidor(num_drones)):
+if(consumidor(crearMapa() ,num_drones)):
     print("FIGURA COMPLETADA")

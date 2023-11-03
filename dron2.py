@@ -6,21 +6,21 @@ import time
 import random
 import sys
 
-IP_KAFKA = "192.168.221.179"
+IP_KAFKA = "localhost"
 
-def consumidor_primerMapa(id_dron):
-    consumer = KafkaConsumer(
-        'mapas-topic',
-        auto_offset_reset='earliest',
-        enable_auto_commit=True,
-        group_id = id_dron,
-        value_deserializer=lambda m: loads(m.decode('utf-8')),
-        bootstrap_servers=[IP_KAFKA + ':9092'])
-
-    #devuelve el primer mapa
-    for m in consumer:
-        if(m.value):
-            return m.value
+#def consumidor_primerMapa(id_dron):
+#    consumer = KafkaConsumer(
+#        'mapas-topic',
+#        auto_offset_reset='earliest',
+#        enable_auto_commit=True,
+#        group_id = id_dron,
+#        value_deserializer=lambda m: loads(m.decode('utf-8')),
+#       bootstrap_servers=[IP_KAFKA + ':9092'])
+#
+#   #devuelve el primer mapa
+#    for m in consumer:
+#        if(m.value):
+#            return m.value
     
         
 #devuelve todos los mapas segun llegan al topic
@@ -32,20 +32,46 @@ def consumidor_mapas(id_dron, pos_actual, pos_final):
         group_id = id_dron,
         value_deserializer=lambda m: loads(m.decode('utf-8')),
         bootstrap_servers=[IP_KAFKA + ':9092'])
+  
     
-    for m in consumer:
-        print(m.value) #imprime un mapa
-        if(isMapaActualizado(m.value) and pos_actual != pos_final):
-            pos_actual = run(pos_actual, pos_final)
-            productor(str(id_dron) + str(pos_actual))
+    #Comprobar en la segunda figura
+    primerConsumidorBool = True
 
-            if(pos_actual == pos_final):
-                productor("finish")
+    for m in consumer:
+
+        if(pos_final == run(pos_actual, pos_final)):
+            listaDronMov[0] = 'G'
+            productor(listaDronMov)
+
+        if(primerConsumidorBool == False and isMapaActualizado(m.value, pos_actual, id_dron) and pos_actual != pos_final):
+            print("loque seas")
+            print(stringMapa(m.value))
+            print("loque seas")
+
+            listaDronMov[2] = run(pos_actual, pos_final)
+            #['R',1,(2,3)]
+            productor(listaDronMov)
+
+
+            #productor("finish") mirar que hacer cuando finish se le pase al engine, cuando sea finish no puede actualizar
+            #print("no llega por cualquier motivo o ha terminado") 
+
+        if(primerConsumidorBool):
+            pos_final = saca_pos_final(m.value, int(id_dron))
+            print("La posicion a la que tengo que ir: "+ str(pos_final))
+            pos_actual = run(pos_actual, pos_final)
+            listaDronMov = ['R', id_dron, pos_actual]
+            productor(listaDronMov)
+            primerConsumidorBool = False
+
+      
         
 
-def isMapaActualizado(mapa, pos_actual):
-    #comprueba si el mapa es el actualizado
-    return True
+def isMapaActualizado(mapa, pos_actual,id_dron):
+
+    if(mapa[pos_actual[0]-1][pos_actual[1]-1] == id_dron):
+        return True
+    return False
 
 #manda los movimientos al topic de los moviemtos
 def productor(movimiento):
@@ -114,13 +140,13 @@ pos_actual = (0,0)
 pos_final = (int,int)
 
 #coge el mapa que le servira para orientarse
-mapa = consumidor_primerMapa(id_dron)
+#mapa = consumidor_primerMapa(id_dron)
 engineConn = True
-print(mapa)
+
 
 #saca la posicion a la que tendra que llegar el dron
-pos_final = saca_pos_final(mapa, int(id_dron))
-print("La posicion a la que tengo que ir: "+ str(pos_final))
+#pos_final = saca_pos_final(mapa, int(id_dron))
+#print("La posicion a la que tengo que ir: "+ str(pos_final))
 
 
 consumidor_mapas(id_dron, pos_actual, pos_final)
