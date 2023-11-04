@@ -39,17 +39,17 @@ def consumidor_mapas(id_dron, pos_actual, pos_final):
 
     for m in consumer:
 
-        if(pos_final == run(pos_actual, pos_final)):
+        if(primerConsumidorBool == False and (pos_actual[0], pos_actual[1]) == (pos_final[0], pos_final[1])):
             listaDronMov[0] = 'G'
             productor(listaDronMov)
-
-        if(primerConsumidorBool == False and isMapaActualizado(m.value, pos_actual, id_dron) and pos_actual != pos_final):
-            print("loque seas")
             print(stringMapa(m.value))
-            print("loque seas")
 
-            listaDronMov[2] = run(pos_actual, pos_final)
+        if(primerConsumidorBool == False and isMapaActualizado(m.value, pos_actual, id_dron) and (pos_actual[0], pos_actual[1]) != (pos_final[0], pos_final[1])):
+            print(stringMapa(m.value))
             #['R',1,(2,3)]
+            pos_actual = run(pos_actual, pos_final)
+            print("Posicion actualizada -->" + str(pos_actual))
+            listaDronMov[2] = pos_actual
             productor(listaDronMov)
 
 
@@ -69,7 +69,7 @@ def consumidor_mapas(id_dron, pos_actual, pos_final):
 
 def isMapaActualizado(mapa, pos_actual,id_dron):
 
-    if(mapa[pos_actual[0]-1][pos_actual[1]-1] == id_dron):
+    if(mapa[pos_actual[0]-1][pos_actual[1]-1][1] == id_dron):
         return True
     return False
 
@@ -96,8 +96,6 @@ def run(pos_actual, pos_final):
 
     if(pos_actual[1] < pos_final[1]):
         posInt_Y = pos_actual[1]+1
-
-    print("Posicion actualizada -->" + str((posInt_X, posInt_Y)))
 
     return (posInt_X, posInt_Y)
 
