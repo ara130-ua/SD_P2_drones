@@ -7,7 +7,7 @@ import json
 
 IP_Kafka = "localhost"
 
-def consumidor(listaMapa, num_drones):
+def consumidor(listaDronMov, num_drones):
     consumer = KafkaConsumer(
         'movimientos-topic',
         auto_offset_reset='earliest',
@@ -18,18 +18,19 @@ def consumidor(listaMapa, num_drones):
     
     finalizados = 0
 
-    for m in consumer: 
-        if(m.value == "finish"):
-            finalizados = finalizados +1
-        else:
-            listaMapa = actualizaMapa(listaMapa, m.value)
-            productor(listaMapa)
-            
+    for m in consumer:
+        
         if(finalizados == num_drones):
             return True
         
-        
+        for listaDron in m.value:   # esta mal revisar
+            if(listaDron[0] == 'G'):
+                finalizados = finalizados + 1
 
+        actualizarMovimientos(listaDronMov, m.value)
+            
+        productor(listaDronMov)
+            
 
 def productor(mapa):
     producer = KafkaProducer(
@@ -77,26 +78,12 @@ def manejoFichero():
             
     return(lista_inicial)
 
-
-def crearMapa():
-    mapaBytes = [[0 for _ in range(20)] for _ in range(20)]
-    listaMapa = []
-  
-    for coordX in mapaBytes:
-        listaCoordX = []
-        for coordY in coordX:
-            listaCoordX.append(('E', 0))
-        listaMapa.append(listaCoordX)
-
-    return(listaMapa)
-
-# dronMov = ['R',ID,(X,Y)]
-def actualizaMapa(listaMapa, dronMov):
-    estado = dronMov[0]
-    Id = dronMov[1]
-    movimiento = (int(dronMov[2][0])-1, int(dronMov[2][1])-1)
-    listaMapa[movimiento[0]][movimiento[1]] = (estado, Id)
-    return listaMapa
+def actualizarMovimientos(listaDronMov, dronMov):
+    for dron in listaDronMov:
+        if(dron[1] == int(dronMov[1])):
+            dron[2] = (dronMov[2][0], dronMov[2][1])
+            return listaDronMov
+       
 
 def stringMapa(listaMapa):
     strMapa = ""
@@ -115,12 +102,15 @@ def stringMapa(listaMapa):
 
 
 #### main ####
-num_drones = 2
 lista_mapa = manejoFichero()[0][1]
-
-#envia el mapa 
+num_drones = len(lista_mapa)
+#envia el mapa
+listaDronMovInicial = [] 
 productor(lista_mapa)
+for dronMov in lista_mapa:
+    listaDronMovInicial.append(['R', dronMov[0], (1,1)])
+
 
 #empieza a recoger los movimientos de los drones
-if(consumidor(crearMapa() ,num_drones)):
+if(consumidor(listaDronMovInicial,num_drones)):
     print("FIGURA COMPLETADA")
