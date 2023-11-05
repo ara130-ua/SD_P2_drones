@@ -33,19 +33,24 @@ def consumidor_mapas(id_dron, pos_actual, pos_final):
         value_deserializer=lambda m: loads(m.decode('utf-8')),
         bootstrap_servers=[IP_KAFKA + ':9092'])
   
+
+    #LEER
+    # hay que tener en cuenta que el producor de movimientos depende de si el mapa esta actualizado o no, esto implica que si al consumir un mapa 
+    # mandamos inmediatamente un movimiento y leemos, puede que no demos tiempo a que el productor de movimientos actualice el mapa, por lo que
+    # el consumidor de mapas no detectara que el mapa esta actualizado y mandara un movimiento REPETIDO.
+
     
     #Comprobar en la segunda figura
     primerConsumidorBool = True
     
-
     for m in consumer:
 
-        if(primerConsumidorBool == False and (pos_actual[0], pos_actual[1]) == (pos_final[0], pos_final[1]) and m.value[0][0] != 'G'):
+        if(primerConsumidorBool == False and (pos_actual[0], pos_actual[1]) == (pos_final[0], pos_final[1]) and listaDronMov[0] != 'G'):
             listaDronMov[0] = 'G'
             productor(listaDronMov)
             print(stringMapa(crearMapa(m.value)))
 
-        if(primerConsumidorBool == False and isMapaActualizado(m.value, pos_actual, id_dron) and (pos_actual[0], pos_actual[1]) != (pos_final[0], pos_final[1])):
+        elif(primerConsumidorBool == False and isMapaActualizado(m.value, pos_actual, id_dron) and (pos_actual[0], pos_actual[1]) != (pos_final[0], pos_final[1])):
             # crear y pintar el mapa
             print(stringMapa(crearMapa(m.value)))
 
@@ -54,7 +59,6 @@ def consumidor_mapas(id_dron, pos_actual, pos_final):
             listaDronMov[2] = pos_actual
             # ['R', ID, (X,Y)]
             productor(listaDronMov)
-
 
             #productor("finish") mirar que hacer cuando finish se le pase al engine, cuando sea finish no puede actualizar
             #print("no llega por cualquier motivo o ha terminado") 

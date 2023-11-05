@@ -20,12 +20,12 @@ def consumidor(listaDronMov, num_drones):
 
     for m in consumer:
         
+        if(m.value[0] == 'G'):
+            finalizados = finalizados + 1
+            print("Dron " + str(m.value[1]) + " finalizado")
+
         if(finalizados == num_drones):
             return True
-        
-        for listaDron in m.value:   # esta mal revisar
-            if(listaDron[0] == 'G'):
-                finalizados = finalizados + 1
 
         actualizarMovimientos(listaDronMov, m.value)
             
@@ -103,7 +103,7 @@ def stringMapa(listaMapa):
 
 #### main ####
 lista_mapa = manejoFichero()[0][1]
-num_drones = len(lista_mapa)
+num_drones = 2 #len(lista_mapa)
 #envia el mapa
 listaDronMovInicial = [] 
 productor(lista_mapa)
