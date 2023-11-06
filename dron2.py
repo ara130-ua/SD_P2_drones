@@ -22,7 +22,7 @@ IP_KAFKA = "localhost"
 #        if(m.value):
 #            return m.value
     
-        
+
 #devuelve todos los mapas segun llegan al topic
 def consumidor_mapas(id_dron, pos_actual, pos_final):
     consumer = KafkaConsumer(
@@ -42,8 +42,20 @@ def consumidor_mapas(id_dron, pos_actual, pos_final):
     
     #Comprobar en la segunda figura
     primerConsumidorBool = True
+    figuraCompleta = False
     
     for m in consumer:
+        
+        if((pos_actual[0], pos_actual[1]) == (pos_final[0], pos_final[1]) and figuraCompleta == True):
+            return True
+
+        if(m.value == "FIGURA COMPLETADA"):
+            pos_final = (0,0)
+            figuraCompleta = True
+            print("Vuelvo a casa")
+            pos_actual = run(pos_actual, pos_final)
+            productor(['R', id_dron, pos_actual])
+            continue
 
         if(primerConsumidorBool == False and (pos_actual[0], pos_actual[1]) == (pos_final[0], pos_final[1]) and listaDronMov[0] != 'G'):
             listaDronMov[0] = 'G'
@@ -71,7 +83,7 @@ def consumidor_mapas(id_dron, pos_actual, pos_final):
             print(stringMapa(crearMapa(m.value)))
 
         
-      
+
         
 
 def isMapaActualizado(listaDronMov, pos_actual,id_dron):
@@ -105,6 +117,12 @@ def run(pos_actual, pos_final):
 
     if(pos_actual[1] < pos_final[1]):
         posInt_Y = pos_actual[1]+1
+
+    if(pos_actual[0] > pos_final[0]):
+        posInt_X = pos_actual[0]-1
+
+    if(pos_actual[1] > pos_final[1]):
+        posInt_Y = pos_actual[1]-1
 
     return (posInt_X, posInt_Y)
 
