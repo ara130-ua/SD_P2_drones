@@ -63,14 +63,17 @@ def consumidor_mapas(id_dron, pos_actual, pos_final):
             #productor("finish") mirar que hacer cuando finish se le pase al engine, cuando sea finish no puede actualizar
             #print("no llega por cualquier motivo o ha terminado") 
 
-        if(primerConsumidorBool):
+        elif(primerConsumidorBool):
             pos_final = saca_pos_final(m.value, int(id_dron))
             print("La posicion a la que tengo que ir: "+ str(pos_final))
             pos_actual = run(pos_actual, pos_final)
             listaDronMov = ['R', id_dron, pos_actual]
             productor(listaDronMov)
             primerConsumidorBool = False
+        else:
+            print(stringMapa(crearMapa(m.value)))
 
+        
       
         
 

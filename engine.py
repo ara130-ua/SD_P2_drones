@@ -81,6 +81,7 @@ def manejoFichero():
 def actualizarMovimientos(listaDronMov, dronMov):
     for dron in listaDronMov:
         if(dron[1] == int(dronMov[1])):
+            dron[0] = dronMov[0]
             dron[2] = (dronMov[2][0], dronMov[2][1])
             return listaDronMov
        
@@ -103,7 +104,7 @@ def stringMapa(listaMapa):
 
 #### main ####
 lista_mapa = manejoFichero()[0][1]
-num_drones = 2 #len(lista_mapa)
+num_drones =len(lista_mapa)
 #envia el mapa
 listaDronMovInicial = [] 
 productor(lista_mapa)
