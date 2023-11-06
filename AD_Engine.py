@@ -8,16 +8,76 @@ import json
 import os
 from kafka import KafkaProducer
 from json import dumps
+from json import loads
 from kafka import KafkaConsumer
 
-
-#def consulta_Clima():
     
 HEADER = 64
 FORMAT = 'utf-8'
 PORT = 5050
 SERVER = socket.gethostbyname(socket.gethostname())
 ADDR_ENGINE = (SERVER, PORT)
+
+#----------------------------------------------------------#
+
+### Funciones que manejan kafka ###
+
+def productor(mapa):
+    producer = KafkaProducer(
+        value_serializer=lambda m: dumps(m).encode('utf-8'),
+        bootstrap_servers=[IP_Kafka + ':9092'])
+    
+    print("Mapa enviado: " + str(mapa))
+    producer.send("mapas-topic", value=mapa)
+    time.sleep(1)
+
+def consumidor(listaDronMov, num_drones):
+    consumer = KafkaConsumer(
+        'movimientos-topic',
+        auto_offset_reset='earliest',
+        enable_auto_commit=True,
+        group_id='engine',
+        value_deserializer=lambda m: loads(m.decode('utf-8')),
+        bootstrap_servers=[IP_Kafka + ':9092']) 
+    
+    finalizados = 0
+
+    for m in consumer:
+        
+        # leer de la BBDD la temperatura actual
+        # si es menor que 0, llamar a la función de vuelta a base
+        if(leerUltFilaClima()[1] < 0):
+            print("Temperatura menor que 0, llamando a la función de vuelta a base")
+            #productor("Vuelta a base")
+            return False
+        
+        if(m.value[0] == 'G'):
+            finalizados = finalizados + 1
+            print("Dron " + str(m.value[1]) + " finalizado")
+
+        if(finalizados == num_drones):
+            return True
+
+        actualizarMovimientos(listaDronMov, m.value)
+            
+        productor(listaDronMov)
+
+def espectaculo(listaMapa, numMaxDrones):
+    productor(listaMapa)
+    listaDronMovInicial = []
+    for dronMov in listaMapa:
+        listaDronMovInicial.append(['R', dronMov[0], (1,1)])
+    
+    if(numMaxDrones < len(listaMapa)):
+        print("No hay suficientes drones para realizar el espectaculo")
+        return False
+    elif(consumidor(listaDronMovInicial, len(listaMapa))):
+        return True
+    else:
+        return False
+
+
+### Funciones que manejan kafka ###
 
 #----------------------------------------------------------#
 
@@ -53,13 +113,7 @@ def receive(client):
 
 ### Funciones de BBDD ###
 
-# posible solución para la BBDD
-# siempre eliminar la fila de la tabla weather
-# y crear una nueva con los datos actualizados
-
 def climaBBDD(datos_clima):
-    # datos_clima es un string que contiene los datos de clima
-    # revisar por si hay que convertirla en tupla
     tuplaClima = eval(datos_clima)
     nombreCiudad = tuplaClima[0]
     temperatura = tuplaClima[1]
@@ -80,13 +134,34 @@ def climaBBDD(datos_clima):
 def leerUltFilaClima():
     # nos conectamos a la BBDD y leemos la última fila
     conexion = sqlite3.connect("bd1.db")
-    cursor = conexion.cursor()
-    cursor.execute("select * from weather order by id desc limit 1")
-    ultimaFila = cursor.fetchone()
-    conexion.close()
-    # convertimos los datos a una tupla y la devolvemos
-    datosClimaActual = ultimaFila[1], ultimaFila[2]
+    try:
+        cursor = conexion.cursor()
+        cursor.execute("select * from weather order by id desc limit 1")
+        ultimaFila = cursor.fetchone()
+        conexion.close()
+        # convertimos los datos a una tupla y la devolvemos
+        datosClimaActual = ultimaFila[1], ultimaFila[2]
+    except sqlite3.OperationalError:
+        print("Error al leer la última fila de la BBDD")
+        conexion.close()
+        return None
     return datosClimaActual
+
+    # no está testado #
+def leerTokenDron(id):
+    # nos conectamos a la BBDD y leemos el token del dron con la id recibida
+    conexion = sqlite3.connect("bd1.db")
+    try:
+        cursor = conexion.cursor()
+        cursor.execute("select token from drones where id="+str(id))
+        token = cursor.fetchone()[0]
+        conexion.close()
+    except sqlite3.OperationalError:
+        print("Error al leer el token del dron")
+        conexion.close()
+        return None
+    # devolvemos el token
+    return token
 
 ### Funciones de BBDD ###
 
@@ -120,6 +195,64 @@ def manejoClima(conn, addr):
     print(f"Se ha cerrado la conexión con el AD_Weather {addr}")
 
 ### Funciones que manejan la conexion con el AD_Wheather ###
+
+#----------------------------------------------------------#
+
+### Funciones que manejan la conexion con los drones ###
+
+# no está testado #
+def manejoTokenDrones(conn, addr):
+    print(f"Se ha conectado el dron {addr}")
+    conectado = True
+    while conectado:
+        try:
+            msg_length = conn.recv(HEADER).decode(FORMAT)
+        except Exception as exc:
+            print("Se ha cerrado la conexión inesperadamente")
+            conn.close()
+            # msg_length = id,token
+        if msg_length:
+            msg_length = int(msg_length)
+            id, token = conn.recv(msg_length).decode(FORMAT).split(",")
+            print(f"Se ha recibido del dron {addr} con id: {id} el token: {token}")
+            # leemos de la base de datos el token del dron con la id recibida
+            # si coinciden devolvemos True
+            # si no coinciden devolvemos False
+            if(leerTokenDron(id) == token):
+                send("OK", conn)
+                print("Token correcto")
+                return True
+            else:
+                send("KO", conn)
+                print("Token incorrecto")
+                return False
+
+# no está testado #
+def autenticacionDrones(numDrones):
+    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server.bind(ADDR_ENGINE) # esto habrá que cambiarlo por la ip del engine y puerto del engine
+    print(f"AD_Engine escuchando en  {ADDR_ENGINE}")
+    server.listen()
+    conn, addr = server.accept()
+    # conexion con el número de drones que vayan a participar en la figura
+    # en el caso de que no se conecten todos, se cancela el espectaculo
+    autenticados = 0
+    for i in range(numDrones):
+        if(manejoTokenDrones(conn, addr)):
+            print("Dron autenticado")
+            autenticados = autenticados + 1
+    
+    if(autenticados == numDrones):
+        print("Todos los drones han sido autenticados")
+        return True
+    else:
+        print("Ha habido un problema con la autenticación de los drones")
+        return False
+    
+        
+
+
+### Funciones que manejan la conexion con los drones ###
 
 #----------------------------------------------------------#
 
@@ -157,26 +290,12 @@ def manejoFichero():
             
     return(lista_inicial)
 
-# dronMov = [E,ID,(X,Y)]
-def crearMapa():
-    mapaBytes = [[0 for _ in range(20)] for _ in range(20)]
-    listaMapa = []
-  
-    for coordX in mapaBytes:
-        listaCoordX = []
-        for coordY in coordX:
-            listaCoordX.append(('E', 0))
-        listaMapa.append(listaCoordX)
-
-    return(listaMapa)
-
-def actualizarMapa(listaMapa, dronMov):
-    estado = dronMov[0]
-    Id = dronMov[1]
-    movimiento = (dronMov[2][0]-1, dronMov[2][1]-1)
-    
-    listaMapa[movimiento[0]][movimiento[1]] = (estado, Id)
-
+def actualizarMovimientos(listaDronMov, dronMov):
+    for dron in listaDronMov:
+        if(dron[1] == int(dronMov[1])):
+            dron[2] = (dronMov[2][0], dronMov[2][1])
+            return listaDronMov
+       
 
 def stringMapa(listaMapa):
     strMapa = ""
@@ -187,14 +306,6 @@ def stringMapa(listaMapa):
         strMapa = strMapa + "|\n"
 
     return strMapa
-
-def mandar_mapa(mapa):
-    producer = KafkaProducer(
-    value_serializer=lambda m: dumps(m).encode('utf-8'),
-    bootstrap_servers=['localhost:9092'])
-
-    producer.send("drones-topic", value=mapa)
-
 
 ### Funciones que manejan el fichero de drones y el mapa ###
 
@@ -208,6 +319,9 @@ def mandar_mapa(mapa):
 if  (len(sys.argv) == 6):
     
     # zona de argumentos
+    
+    numDrones = int(sys.argv[1])
+    PORT_ENGINE = int(sys.argv[2])
 
     IP_BROKER = sys.argv[3]
     PORT_BROKER = int(sys.argv[4])
@@ -264,10 +378,19 @@ if  (len(sys.argv) == 6):
                                 print("Comenzando espectaculo")
                                 # comenzar espectaculo
 
-                                print("Servidor clima")
+                                # Autenticación de los drones
+                                if(autenticacionDrones()):
+                                
+                                    print("Servidor clima")
 
-                                IP_WEATHER = socket.gethostbyname(socket.gethostname())
-                                conexionClima(IP_WEATHER, sys.argv[5])
+                                    IP_WEATHER = socket.gethostbyname(socket.gethostname())
+                                    conexionClima(IP_WEATHER, sys.argv[5])
+                                    
+                                    espectaculo(figuras[int(opcionFigura)-1][1], numDrones)
+                                    
+                                    # Hacer un bucle que cada x tiempo lea la BBDD y si hay un cambio en la temperatura (negativo)
+                                    # llama a la función de vuelta a base, que envia a los drones a la posicion (1,1)
+                                
 
                                 opcFiguraSelecBool = False
                             elif(opcionFiguraSelec == "4"):
@@ -296,8 +419,6 @@ if  (len(sys.argv) == 6):
         else:
             os.system("clear")
             print("Opción no válida")
-
-    #strMapa = manejoMapa()
 
 
     
