@@ -1,3 +1,4 @@
+import subprocess
 import time
 from kafka import KafkaConsumer
 from kafka import KafkaProducer
@@ -17,6 +18,8 @@ def consumidor(listaDronMov, num_drones):
         bootstrap_servers=[IP_Kafka + ':9092']) 
     
     finalizados = 0
+    enBase = 0
+    volverBase = False
 
     for m in consumer:
         
@@ -25,12 +28,22 @@ def consumidor(listaDronMov, num_drones):
             print("Dron " + str(m.value[1]) + " finalizado")
 
         if(finalizados == num_drones):
-            return True
+            productor("FIGURA COMPLETADA")
+            finalizados = 0
+            volverBase = True
+            
 
         actualizarMovimientos(listaDronMov, m.value)
             
         productor(listaDronMov)
-            
+
+        if(volverBase==True):
+            enBase = 0
+            for dron in listaDronMov:
+                if(dron[2] == (1,1)):
+                    enBase = enBase + 1
+            if(enBase == 8):
+                return True
 
 def productor(mapa):
     producer = KafkaProducer(
@@ -104,7 +117,7 @@ def stringMapa(listaMapa):
 
 #### main ####
 lista_mapa = manejoFichero()[0][1]
-num_drones =len(lista_mapa)
+num_drones = 2 #len(lista_mapa)
 #envia el mapa
 listaDronMovInicial = [] 
 productor(lista_mapa)
@@ -114,4 +127,17 @@ for dronMov in lista_mapa:
 
 #empieza a recoger los movimientos de los drones
 if(consumidor(listaDronMovInicial,num_drones)):
-    print("FIGURA COMPLETADA")
+    print("FIGURA 1 COMPLETADA")
+    #Borramos los topics 
+     
+delete_topic1 = "gnome-terminal -- bash -c '/home/joanclq/kafka/bin/kafka-topics.sh --delete --topic mapas-topic --bootstrap-server " + IP_Kafka + ":9092; exec bash'"
+delete_topic2 = "gnome-terminal -- bash -c '/home/joanclq/kafka/bin/kafka-topics.sh --delete --topic movimientos-topic --bootstrap-server " + IP_Kafka + ":9092; exec bash'"
+subprocess.run(delete_topic2, shell=True) 
+subprocess.run(delete_topic1, shell=True)
+ 
+time.sleep(5)
+
+productor(lista_mapa)
+#empieza a recoger los movimientos de los drones
+if(consumidor(listaDronMovInicial,num_drones)):
+    print("FIGURA 2 COMPLETADA")
