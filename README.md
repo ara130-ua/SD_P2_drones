@@ -9,6 +9,7 @@ AD_Drone = 5050
 AD_Registry = 6050
 AD_Wheather = 7050
 AD_Engine = 8050
+kafka = 9092
 
 Paso a paso de la práctica:
 

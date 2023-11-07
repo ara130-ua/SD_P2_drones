@@ -199,10 +199,11 @@ def dronEngine(ip_eng, puerto_eng, id, token):
     print(f"Se ha establecido conexión en [{ADDR}]")
     send(id+","+token, client)
     respEngine = client.recv(HEADER).decode(FORMAT)
+    print("Respuesta del engine: ", respEngine)
     if respEngine == "OK":
         print("Se ha dado de alta en el espectaculo")
         return True
-    if respEngine == "KO":
+    else:
         print("No se ha podido dar de alta en el espectaculo")
         return False
     
