@@ -1,9 +1,10 @@
 import socket
 import random
 import time
+import sys
 
-SERVER = socket.gethostbyname(socket.gethostname())
-PORT = 5050
+SERVER = "192.168.108.179" #socket.gethostbyname(socket.gethostname())
+PORT = int(sys.argv[1])
 FORMAT = 'utf-8'
 HEADER = 64
 
@@ -16,6 +17,10 @@ def send(msg, cliente):
     cliente.send(send_length)
     print("Enviando mensaje: ", message)
     cliente.send(message)
+
+   
+        
+    
 
 def conexionEngine():
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -35,12 +40,22 @@ def manejoClima(conn, addr):
         except Exception as exc:
             print("Se ha cerrado la conexión inesperadamente")
             conn.close()
+            conectado = False
+
         if msg_length:
             print("Se ha recibido del AD_Engine una petición de clima")
             strDatosClima = str(random.choice(datosClima))
-            send(strDatosClima, conn)
+            try:
+                send(strDatosClima, conn)
+            except Exception as exc:
+                print("Se ha cerrado la conexión inesperadamente" + str(exc))
+                conn.close()
+                conectado = False
+            
             print("Se ha enviado el clima al AD_Engine")
-            time.sleep(10)
+            msg_length = None
+            time.sleep(12)
+            
     
 def manejoFicheroClima():
     with open('clima.txt', 'r') as archivo:
