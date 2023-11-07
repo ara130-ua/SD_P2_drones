@@ -11,12 +11,10 @@ from json import dumps
 from json import loads
 from kafka import KafkaConsumer
 
-    
+IP_Kafka = "localhost"
 HEADER = 64
 FORMAT = 'utf-8'
-PORT = 5050
-SERVER = socket.gethostbyname(socket.gethostname())
-ADDR_ENGINE = (SERVER, PORT)
+SERVER = "192.168.108.182" #socket.gethostbyname(socket.gethostname())
 
 #----------------------------------------------------------#
 
@@ -25,7 +23,7 @@ ADDR_ENGINE = (SERVER, PORT)
 def productor(mapa):
     producer = KafkaProducer(
         value_serializer=lambda m: dumps(m).encode('utf-8'),
-        bootstrap_servers=[IP_Kafka + ':9092'])
+        bootstrap_servers=[ADDR_BROKER])
     
     print("Mapa enviado: " + str(mapa))
     producer.send("mapas-topic", value=mapa)
@@ -38,7 +36,7 @@ def consumidor(listaDronMov, num_drones):
         enable_auto_commit=True,
         group_id='engine',
         value_deserializer=lambda m: loads(m.decode('utf-8')),
-        bootstrap_servers=[IP_Kafka + ':9092']) 
+        bootstrap_servers=[ADDR_BROKER]) 
     
     finalizados = 0
 
@@ -88,9 +86,13 @@ def send(msg, client):
     msg_length = len(message)
     send_length = str(msg_length).encode(FORMAT)
     send_length += b' ' * (HEADER - len(send_length))
-    client.send(send_length)
-    print("Enviando mensaje: ", message)
-    client.send(message)
+    try:
+        client.send(send_length)
+        print("Enviando mensaje: ", message)
+        client.send(message)
+    except Exception as exc:
+        print("Se ha cerrado la conexión inesperadamente")
+        client.close()
 
 def receive(client):
     try:
@@ -98,14 +100,15 @@ def receive(client):
         if msg_length:
             msg_length = int(msg_length)
             msg = client.recv(msg_length).decode(FORMAT)
-            print(f"Se ha recibido del servidor: {msg}")
+            print(f"Se ha recibido: {msg}")
             return msg
         else:
-            print("No se ha recibido nada del servidor")
+            print("No se ha recibido nada")
             return None
     except:
-        print("No se ha encontrado servidor o se ha caido")
+        print("No se ha encontrado conexión o se ha caido")
         return None
+
     
 ### Funciones de servidor ###
 
@@ -192,6 +195,7 @@ def manejoClima(conn, addr):
         print(f"Se ha recibido del AD_Weather {addr} los datos de clima: {datos_clima}")
         # guardar en la BBDD
         print(climaBBDD(datos_clima))
+        time.sleep(10)
     print(f"Se ha cerrado la conexión con el AD_Weather {addr}")
 
 ### Funciones que manejan la conexion con el AD_Wheather ###
@@ -228,7 +232,7 @@ def manejoTokenDrones(conn, addr):
                 return False
 
 # no está testado #
-def autenticacionDrones(numDrones):
+def autentificacionDrones(numDrones):
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server.bind(ADDR_ENGINE) # esto habrá que cambiarlo por la ip del engine y puerto del engine
     print(f"AD_Engine escuchando en  {ADDR_ENGINE}")
@@ -311,22 +315,28 @@ def stringMapa(listaMapa):
 
 #----------------------------------------------------------#
 
-#usaremos 5 argumentos, la BBDD no necesita de conexion
+#usaremos 6 argumentos, la BBDD no necesita de conexion
 # número máximo de drones
+# puerto de escucha del AD_Engine
 # puerto del AD_Engine
 # IP y puerto del Broker
 # IP y puerto del AD_Wheather
-if  (len(sys.argv) == 6):
+if  (len(sys.argv) == 7):
     
     # zona de argumentos
     
     numDrones = int(sys.argv[1])
     PORT_ENGINE = int(sys.argv[2])
+    ADDR_ENGINE = (SERVER, PORT_ENGINE)
 
     IP_BROKER = sys.argv[3]
     PORT_BROKER = int(sys.argv[4])
 
-    ADDR_BROKER = (IP_BROKER, PORT_BROKER)
+    ADDR_BROKER = IP_BROKER + ":" + str(PORT_BROKER)
+
+    IP_WEATHER = sys.argv[5]
+    PORT_WEATHER = int(sys.argv[6])
+    ADDR_WEATHER = (IP_WEATHER, PORT_WEATHER)
 
     print("Bienvenido al AD_Engine")
     programaActiveBool = True
@@ -377,16 +387,16 @@ if  (len(sys.argv) == 6):
                                 os.system("clear")
                                 print("Comenzando espectaculo")
                                 # comenzar espectaculo
+                                conexionClima(IP_WEATHER, PORT_WEATHER)
 
                                 # Autenticación de los drones
-                                if(autenticacionDrones()):
+                                #if(autentificacionDrones()):
                                 
-                                    print("Servidor clima")
+                                    #print("Servidor clima")
 
-                                    IP_WEATHER = socket.gethostbyname(socket.gethostname())
-                                    conexionClima(IP_WEATHER, sys.argv[5])
+
                                     
-                                    espectaculo(figuras[int(opcionFigura)-1][1], numDrones)
+                                    #espectaculo(figuras[int(opcionFigura)-1][1], numDrones)
                                     
                                     # Hacer un bucle que cada x tiempo lea la BBDD y si hay un cambio en la temperatura (negativo)
                                     # llama a la función de vuelta a base, que envia a los drones a la posicion (1,1)
@@ -423,4 +433,4 @@ if  (len(sys.argv) == 6):
 
     
 else:
-    print ("Oops!. Parece que algo falló. Necesito estos argumentos: <Max_Drones> <IP_Broker> <Puerto_Broker> <IP_Weather> <Puerto_Weather>")
+    print ("Oops!. Parece que algo falló. Necesito estos argumentos: <Puerto_engine> <Max_Drones> <IP_Broker> <Puerto_Broker> <IP_Weather> <Puerto_Weather>")
