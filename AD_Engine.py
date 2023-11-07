@@ -98,7 +98,7 @@ def send(msg, client):
     send_length = str(msg_length).encode(FORMAT)
     send_length += b' ' * (HEADER - len(send_length))
     try:
-        client.send(send_length)
+        
         print("Enviando mensaje: ", message)
         client.send(message)
     except Exception as exc:
@@ -218,29 +218,28 @@ def manejoClima(conn, addr):
 # no está testado #
 def manejoTokenDrones(conn, addr):
     print(f"Se ha conectado el dron {addr}")
-    conectado = True
-    while conectado:
-        try:
-            msg_length = conn.recv(HEADER).decode(FORMAT)
-        except Exception as exc:
-            print("Se ha cerrado la conexión inesperadamente")
-            conn.close()
-            # msg_length = id,token
-        if msg_length:
-            msg_length = int(msg_length)
-            id, token = conn.recv(msg_length).decode(FORMAT).split(",")
-            print(f"Se ha recibido del dron {addr} con id: {id} el token: {token}")
-            # leemos de la base de datos el token del dron con la id recibida
-            # si coinciden devolvemos True
-            # si no coinciden devolvemos False
-            if(leerTokenDron(id) == token):
-                send("OK", conn)
-                print("Token correcto")
-                return True
-            else:
-                send("KO", conn)
-                print("Token incorrecto")
-                return False
+
+    try:
+        msg_length = conn.recv(HEADER).decode(FORMAT)
+    except Exception as exc:
+        print("Se ha cerrado la conexión inesperadamente")
+        conn.close()
+        # msg_length = id,token
+    if msg_length:
+        msg_length = int(msg_length)
+        id, token = conn.recv(msg_length).decode(FORMAT).split(",")
+        print(f"Se ha recibido del dron {addr} con id: {id} el token: {token}")
+        # leemos de la base de datos el token del dron con la id recibida
+        # si coinciden devolvemos True
+        # si no coinciden devolvemos False
+        if(leerTokenDron(id) == int(token)):
+            send("OK", conn)
+            print("Token correcto")
+            return True
+        else:
+            send("KO", conn)
+            print("Token incorrecto")
+            return False
 
 # no está testado #
 def autentificacionDrones(numDrones):
@@ -340,8 +339,8 @@ if  (len(sys.argv) == 7):
     PORT_ENGINE = int(sys.argv[2])
     ADDR_ENGINE = (SERVER, PORT_ENGINE)
 
-    IP_BROKER = sys.argv[3]
-    PORT_BROKER = int(sys.argv[4])
+    IP_BROKER = str(sys.argv[3])
+    PORT_BROKER = sys.argv[4]
 
     ADDR_BROKER = IP_BROKER + ":" + str(PORT_BROKER)
 
@@ -400,7 +399,7 @@ if  (len(sys.argv) == 7):
                                 # comenzar espectaculo
                         
                                 # Autenticación de los drones
-                                if(autentificacionDrones()):
+                                if(autentificacionDrones(numDrones)):
                                 
                                     print("Servidor clima")
                                     conexionClima(IP_WEATHER, PORT_WEATHER)
