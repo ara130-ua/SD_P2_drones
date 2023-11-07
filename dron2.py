@@ -83,9 +83,7 @@ def consumidor_mapas(id_dron, pos_actual, pos_final):
         else:
             print(stringMapa(crearMapa(m.value)))
 
-        
-
-        
+   
 
 def isMapaActualizado(listaDronMov, pos_actual,id_dron):
 
