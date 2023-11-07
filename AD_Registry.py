@@ -4,9 +4,7 @@ import sys
 import sqlite3
 
 HEADER = 64
-PORT = 5050
-SERVER = socket.gethostbyname(socket.gethostname())
-ADDR = (SERVER, PORT)
+SERVER = "192.168.108.182" #socket.gethostbyname(socket.gethostname())
 FORMAT = 'utf-8'
 
 def create_Dron(alias):
@@ -78,6 +76,7 @@ def registro_dron():
 if(len(sys.argv) == 2):
 
     PORT = int(sys.argv[1])
+    ADDR = (SERVER,PORT)
 
 
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

@@ -1,4 +1,5 @@
 import socket
+import subprocess
 import threading
 import sys
 import sqlite3
@@ -11,7 +12,6 @@ from json import dumps
 from json import loads
 from kafka import KafkaConsumer
 
-IP_Kafka = "localhost"
 HEADER = 64
 FORMAT = 'utf-8'
 SERVER = "192.168.108.182" #socket.gethostbyname(socket.gethostname())
@@ -39,26 +39,32 @@ def consumidor(listaDronMov, num_drones):
         bootstrap_servers=[ADDR_BROKER]) 
     
     finalizados = 0
+    enBase = 0
+    volverBase = False
 
     for m in consumer:
-        
-        # leer de la BBDD la temperatura actual
-        # si es menor que 0, llamar a la función de vuelta a base
-        if(leerUltFilaClima()[1] < 0):
-            print("Temperatura menor que 0, llamando a la función de vuelta a base")
-            #productor("Vuelta a base")
-            return False
         
         if(m.value[0] == 'G'):
             finalizados = finalizados + 1
             print("Dron " + str(m.value[1]) + " finalizado")
 
         if(finalizados == num_drones):
-            return True
+            productor("FIGURA COMPLETADA")
+            finalizados = 0
+            volverBase = True
+            
 
         actualizarMovimientos(listaDronMov, m.value)
             
         productor(listaDronMov)
+
+        if(volverBase==True):
+            enBase = 0
+            for dron in listaDronMov:
+                if(dron[2] == (1,1)):
+                    enBase = enBase + 1
+            if(enBase == 8):
+                return True
 
 def espectaculo(listaMapa, numMaxDrones):
     productor(listaMapa)
@@ -68,11 +74,16 @@ def espectaculo(listaMapa, numMaxDrones):
     
     if(numMaxDrones < len(listaMapa)):
         print("No hay suficientes drones para realizar el espectaculo")
-        return False
-    elif(consumidor(listaDronMovInicial, len(listaMapa))):
-        return True
     else:
-        return False
+        if(consumidor(listaDronMovInicial, len(listaMapa))):
+            print("Figura finalizada")
+
+        delete_topic1 = "gnome-terminal -- bash -c '/home/joanclq/kafka/bin/kafka-topics.sh --delete --topic mapas-topic --bootstrap-server " + ADDR_BROKER + "; exec bash'"
+        delete_topic2 = "gnome-terminal -- bash -c '/home/joanclq/kafka/bin/kafka-topics.sh --delete --topic movimientos-topic --bootstrap-server " + ADDR_BROKER + "; exec bash'"
+        subprocess.run(delete_topic2, shell=True) 
+        subprocess.run(delete_topic1, shell=True)
+        # si hace algo raro time.sleep(5)
+
 
 
 ### Funciones que manejan kafka ###
@@ -387,16 +398,15 @@ if  (len(sys.argv) == 7):
                                 os.system("clear")
                                 print("Comenzando espectaculo")
                                 # comenzar espectaculo
-                                conexionClima(IP_WEATHER, PORT_WEATHER)
-
+                        
                                 # Autenticación de los drones
-                                #if(autentificacionDrones()):
+                                if(autentificacionDrones()):
                                 
-                                    #print("Servidor clima")
+                                    print("Servidor clima")
+                                    conexionClima(IP_WEATHER, PORT_WEATHER)
 
+                                    espectaculo(figuras[int(opcionFigura)-1][1], numDrones)
 
-                                    
-                                    #espectaculo(figuras[int(opcionFigura)-1][1], numDrones)
                                     
                                     # Hacer un bucle que cada x tiempo lea la BBDD y si hay un cambio en la temperatura (negativo)
                                     # llama a la función de vuelta a base, que envia a los drones a la posicion (1,1)
