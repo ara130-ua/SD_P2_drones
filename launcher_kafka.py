@@ -1,7 +1,7 @@
 import subprocess
 import time
 
-IP_KAFKA = "192.168.108.182"
+IP_KAFKA = "localhost"
 
 #   ATENCION
 #   Para un correcto funcionamiento es necesario que kafka se encuentre en la carpeta home del usuario

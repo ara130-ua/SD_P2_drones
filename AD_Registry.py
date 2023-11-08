@@ -4,7 +4,7 @@ import sys
 import sqlite3
 
 HEADER = 64
-SERVER = "192.168.108.182" #socket.gethostbyname(socket.gethostname())
+SERVER = "localhost" #socket.gethostbyname(socket.gethostname())
 FORMAT = 'utf-8'
 
 def create_Dron(alias):
@@ -54,7 +54,7 @@ def send(msg, server):
     msg_length = len(message)
     send_length = str(msg_length).encode(FORMAT)
     send_length += b' ' * (HEADER - len(send_length))
-    server.send(send_length)
+    server.send(send_length) 
     print("Enviando mensaje: ", message)
     server.send(message)
 
@@ -84,7 +84,7 @@ if(len(sys.argv) == 2):
 
     registro_dron()
 else:
-    print("AD_Registry necesita estos argumentos <Puerto de escucha>, <IP de la BBDD>, <Puerto de la BBDD>")
+    print("AD_Registry necesita estos argumentos <Puerto de escucha>")
 
 
 #127.0.0.1

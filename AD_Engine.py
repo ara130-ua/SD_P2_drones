@@ -3,7 +3,7 @@ import subprocess
 import threading
 import sys
 import sqlite3
-import datetime
+import datetime #¿? si sepuede, quitalo 
 import time
 import json
 import os
@@ -14,7 +14,7 @@ from kafka import KafkaConsumer
 
 HEADER = 64
 FORMAT = 'utf-8'
-SERVER = "192.168.108.182" #socket.gethostbyname(socket.gethostname())
+SERVER = "localhost" #socket.gethostbyname(socket.gethostname())
 
 #----------------------------------------------------------#
 
@@ -98,7 +98,7 @@ def send(msg, client):
     send_length = str(msg_length).encode(FORMAT)
     send_length += b' ' * (HEADER - len(send_length))
     try:
-        client.send(send_length)
+        #client.send(send_length)
         print("Enviando mensaje: ", message)
         client.send(message)
     except Exception as exc:
@@ -219,6 +219,7 @@ def manejoClima(conn, addr):
 def manejoTokenDrones(conn, addr):
     print(f"Se ha conectado el dron {addr}")
     conectado = True
+    terminados = 0
     while conectado:
         try:
             msg_length = conn.recv(HEADER).decode(FORMAT)
@@ -233,14 +234,14 @@ def manejoTokenDrones(conn, addr):
             # leemos de la base de datos el token del dron con la id recibida
             # si coinciden devolvemos True
             # si no coinciden devolvemos False
-            if(leerTokenDron(id) == token):
+            if(str(leerTokenDron(id)) == token):
                 send("OK", conn)
                 print("Token correcto")
-                return True
+                terminados = terminados + 1
             else:
                 send("KO", conn)
                 print("Token incorrecto")
-                return False
+
 
 # no está testado #
 def autentificacionDrones(numDrones):
@@ -251,12 +252,8 @@ def autentificacionDrones(numDrones):
     conn, addr = server.accept()
     # conexion con el número de drones que vayan a participar en la figura
     # en el caso de que no se conecten todos, se cancela el espectaculo
-    autenticados = 0
-    for i in range(numDrones):
-        if(manejoTokenDrones(conn, addr)):
-            print("Dron autenticado")
-            autenticados = autenticados + 1
-    
+    autenticados = manejoTokenDrones(conn, addr)
+
     if(autenticados == numDrones):
         print("Todos los drones han sido autenticados")
         return True
@@ -336,14 +333,14 @@ if  (len(sys.argv) == 7):
     
     # zona de argumentos
     
-    numDrones = int(sys.argv[1])
-    PORT_ENGINE = int(sys.argv[2])
+    numDrones = int(sys.argv[2])
+    PORT_ENGINE = int(sys.argv[1])
     ADDR_ENGINE = (SERVER, PORT_ENGINE)
 
     IP_BROKER = sys.argv[3]
     PORT_BROKER = int(sys.argv[4])
 
-    ADDR_BROKER = IP_BROKER + ":" + str(PORT_BROKER)
+    ADDR_BROKER = str(IP_BROKER) + ":" + str(PORT_BROKER)
 
     IP_WEATHER = sys.argv[5]
     PORT_WEATHER = int(sys.argv[6])
@@ -400,7 +397,7 @@ if  (len(sys.argv) == 7):
                                 # comenzar espectaculo
                         
                                 # Autenticación de los drones
-                                if(autentificacionDrones()):
+                                if(autentificacionDrones(numDrones)):
                                 
                                     print("Servidor clima")
                                     conexionClima(IP_WEATHER, PORT_WEATHER)
