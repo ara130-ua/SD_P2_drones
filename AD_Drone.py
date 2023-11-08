@@ -24,7 +24,7 @@ def consumidor_mapas(id_dron, pos_actual, pos_final):
         enable_auto_commit=True,
         group_id = id_dron,
         value_deserializer=lambda m: loads(m.decode('utf-8')),
-        bootstrap_servers=[IP_KAFKA + ':9092'])
+        bootstrap_servers=[ADDR_KAFKA])
   
 
     #LEER
@@ -35,8 +35,21 @@ def consumidor_mapas(id_dron, pos_actual, pos_final):
     
     #Comprobar en la segunda figura
     primerConsumidorBool = True
+    figuraCompleta = False
     
     for m in consumer:
+
+        if((pos_actual[0], pos_actual[1]) == (pos_final[0], pos_final[1]) and figuraCompleta == True):
+            return True
+
+        if(m.value == "FIGURA COMPLETADA"):
+            pos_final = (1,1)
+            figuraCompleta = True
+            print("Vuelvo a casa")
+            pos_actual = run(pos_actual, pos_final)
+            listaDronMov = ['R', id_dron, pos_actual]
+            productor(listaDronMov)
+            continue
 
         if(primerConsumidorBool == False and (pos_actual[0], pos_actual[1]) == (pos_final[0], pos_final[1]) and listaDronMov[0] != 'G'):
             listaDronMov[0] = 'G'
@@ -53,23 +66,22 @@ def consumidor_mapas(id_dron, pos_actual, pos_final):
             # ['R', ID, (X,Y)]
             productor(listaDronMov)
 
-            #productor("finish") mirar que hacer cuando finish se le pase al engine, cuando sea finish no puede actualizar
-            #print("no llega por cualquier motivo o ha terminado") 
-
-        if(primerConsumidorBool):
+        elif(primerConsumidorBool):
             pos_final = saca_pos_final(m.value, int(id_dron))
             print("La posicion a la que tengo que ir: "+ str(pos_final))
             pos_actual = run(pos_actual, pos_final)
             listaDronMov = ['R', id_dron, pos_actual]
             productor(listaDronMov)
             primerConsumidorBool = False
+        else:
+            print(stringMapa(crearMapa(m.value)))
             
             
 #manda los movimientos al topic de los moviemtos
 def productor(movimiento):
     producer = KafkaProducer(
         value_serializer=lambda m: dumps(m).encode('utf-8'),
-        bootstrap_servers=[IP_KAFKA + ':9092'])
+        bootstrap_servers=[ADDR_KAFKA])
 
     producer.send("movimientos-topic", value=movimiento)
     time.sleep(1)
@@ -94,6 +106,12 @@ def run(pos_actual, pos_final):
 
     if(pos_actual[1] < pos_final[1]):
         posInt_Y = pos_actual[1]+1
+
+    if(pos_actual[0] > pos_final[0]):
+        posInt_X = pos_actual[0]-1
+
+    if(pos_actual[1] > pos_final[1]):
+        posInt_Y = pos_actual[1]-1
 
     return (posInt_X, posInt_Y)
 
@@ -181,10 +199,11 @@ def dronEngine(ip_eng, puerto_eng, id, token):
     print(f"Se ha establecido conexión en [{ADDR}]")
     send(id+","+token, client)
     respEngine = client.recv(HEADER).decode(FORMAT)
+    print("Respuesta del engine: ", respEngine)
     if respEngine == "OK":
         print("Se ha dado de alta en el espectaculo")
         return True
-    if respEngine == "KO":
+    else:
         print("No se ha podido dar de alta en el espectaculo")
         return False
     
@@ -228,19 +247,31 @@ def receive(client):
 # ip y puerto de registry
 # alias del dron
 if (len(sys.argv) == 8):
+
+    IP_ENGINE = sys.argv[1] 
+    PUERTO_ENGINE = sys.argv[2]
+
+    IP_KAFKA = sys.argv[3]
+    PUERTO_KAFKA = sys.argv[4]
+    ADDR_KAFKA = IP_KAFKA + ":" + str(PUERTO_KAFKA)
+
+    IP_REGISTRY = sys.argv[5]
+    PUERTO_REGISTRY = sys.argv[6]
+
+    ALIAS_DRON = sys.argv[7]
+
     #Argumentos dronRegistry( IP_Registry, Puerto_Registry, Alias_Dron )
-    id, token = dronRegistry(sys.argv[5], sys.argv[6], sys.argv[7])
+    id, token = dronRegistry(IP_REGISTRY, PUERTO_REGISTRY, ALIAS_DRON)
     print( "id: ", id, " token: ", token)
     
     # conexion con el módulo AD_Engine para darse de alta en el espectaculo
     #Argumentos dronEngine( IP_Engine, Puerto_Engine, ID, Token)
     
     ## NO SE HA PROBADO ##
-    if(dronEngine(sys.argv[1], sys.argv[2], id, token)):
+    if(dronEngine(IP_ENGINE, PUERTO_ENGINE, id, token)):
         # conexion con el módulo AD_Kafka para recibir las ordenes
         #Argumentos consumidor( IP_Kafka, Puerto_Kafka, ID )
-        consumidor_mapas(sys.argv[3], sys.argv[4], id)
-       
+        consumidor_mapas(IP_KAFKA, PUERTO_KAFKA, id)
     
 else:
     print("No se ha podido conectar al servidor de registro, los argumentos son <IP_Engine> <Puerto_Engine> <IP_Kafka> <Puerto_Kafka> <IP_Registry> <Puerto_Registry> <Alias_Dron>")
