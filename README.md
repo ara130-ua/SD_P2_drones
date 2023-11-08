@@ -43,3 +43,7 @@ kafka-topics.sh --delete --topic <nombre-del-topico> --bootstrap-server <tu-serv
 #### cosas por hacer conexión clima-engine ####
 
 Revisar el socket de wheather
+
+### Excepcion en dron al cerrar el engine ###
+
+### Crear un bucle while en los sockets de engine-dron igual que en registry-dron ###

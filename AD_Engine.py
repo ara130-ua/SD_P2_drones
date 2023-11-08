@@ -337,8 +337,8 @@ if  (len(sys.argv) == 7):
     PORT_ENGINE = int(sys.argv[1])
     ADDR_ENGINE = (SERVER, PORT_ENGINE)
 
-    IP_BROKER = sys.argv[3]
-    PORT_BROKER = int(sys.argv[4])
+    IP_BROKER = str(sys.argv[3])
+    PORT_BROKER = sys.argv[4]
 
     ADDR_BROKER = str(IP_BROKER) + ":" + str(PORT_BROKER)
 
