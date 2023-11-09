@@ -365,7 +365,14 @@ if (len(sys.argv) == 8):
                     pos_actual = run(pos_actual, (1,1))
                     print("Posicion actualizada -->" + str(pos_actual))
                     time.sleep(1)
-
+            print("Quieres volver a participar en otra figura? (S/N)")
+            respuesta = input()
+            if(respuesta == "S" or respuesta == "s"):
+                engineOnline = True
+                pos_actual = (0,0)
+                pos_final = (int,int)
+            else:
+                engineOnline = False
     else:
         print("No se ha podido entrar al espectaculo")
         engineOnline = False
