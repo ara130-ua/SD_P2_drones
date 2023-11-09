@@ -187,10 +187,15 @@ def conexionClima(ipClima, puertoClima):
     ADDR = (str(ipClima), int(puertoClima))
 
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    client.connect(ADDR)
-    print(f"Se ha establecido conexión en [{ADDR}]")
-    thread = threading.Thread(target=manejoClima, args=(client, ADDR))
-    thread.start()
+    try:
+        client.connect(ADDR)
+        print(f"Se ha establecido conexión en [{ADDR}]")
+        thread = threading.Thread(target=manejoClima, args=(client, ADDR))
+        thread.start()
+    except Exception as exc:
+        print("No se ha encontrado conexión")
+
+
 
 
 def manejoClima(conn, addr):
