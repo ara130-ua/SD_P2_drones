@@ -39,6 +39,7 @@ def consumidor_mapas(id_dron, pos_actual, pos_final):
     figuraCompleta = False
     
     for m in consumer:
+
         print("Recibido mapa: " + str(m.value))
         if((pos_actual[0], pos_actual[1]) == (pos_final[0], pos_final[1]) and figuraCompleta == True):
             return True
@@ -357,6 +358,16 @@ if (len(sys.argv) == 8):
         while engineOnline:
             try:
                 engineOnline = consumidor_mapas(id, pos_actual, pos_final)
+
+                if(engineOnline == False):
+                    print("Se ha cerrado la conexión inesperadamente con el engine" + str(exc))
+                engineOnline = False
+                print("Vuelvo a casa")
+                while(pos_actual != (1,1)):
+                    pos_actual = run(pos_actual, (1,1))
+                    print("Posicion actualizada -->" + str(pos_actual))
+                    time.sleep(1)
+
             except Exception as exc:
                 print("Se ha cerrado la conexión inesperadamente con el engine" + str(exc))
                 engineOnline = False
