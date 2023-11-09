@@ -43,7 +43,7 @@ def consumidor_mapas(id_dron, pos_actual, pos_final):
         if((pos_actual[0], pos_actual[1]) == (pos_final[0], pos_final[1]) and figuraCompleta == True):
             return True
 
-        if(m.value == "FIGURA COMPLETADA"):
+        if(m.value == "FIGURA COMPLETADA" or m.value == "CLIMA ADVERSO"):
             pos_final = (1,1)
             figuraCompleta = True
             print("Vuelvo a casa")
@@ -55,11 +55,13 @@ def consumidor_mapas(id_dron, pos_actual, pos_final):
         if(primerConsumidorBool == False and (pos_actual[0], pos_actual[1]) == (pos_final[0], pos_final[1]) and listaDronMov[0] != 'G'):
             listaDronMov[0] = 'G'
             productor(listaDronMov)
-            print(stringMapa(crearMapa(m.value)))
+            #print(stringMapa(crearMapa(m.value)))
+            pygameMapa(crearMapa(m.value))
 
         elif(primerConsumidorBool == False and isMapaActualizado(m.value, pos_actual, id_dron) and (pos_actual[0], pos_actual[1]) != (pos_final[0], pos_final[1])):
             # crear y pintar el mapa
-            print(stringMapa(crearMapa(m.value)))
+            #print(stringMapa(crearMapa(m.value)))
+            pygameMapa(crearMapa(m.value))
 
             pos_actual = run(pos_actual, pos_final)
             print("Posicion actualizada -->" + str(pos_actual))
@@ -75,7 +77,8 @@ def consumidor_mapas(id_dron, pos_actual, pos_final):
             productor(listaDronMov)
             primerConsumidorBool = False
         else:
-            print(stringMapa(crearMapa(m.value)))
+            #print(stringMapa(crearMapa(m.value)))
+            pygameMapa(crearMapa(m.value))
             
             
 #manda los movimientos al topic de los moviemtos
@@ -92,20 +95,6 @@ def productor(movimiento):
 #----------------------------------------------------#
 
 ### Funciones para el manejo de pygame ###
-
-# export LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libstdc++.so.6
-
-# Inicializa Pygame
-#pygame.init()
-
-# Definir constantes
-#WINDOW_SIZE = (400, 400)
-#GRID_SIZE = 20
-#DRONE_SIZE = 20
-
-# Crea la ventana de juego
-#screen = pygame.display.set_mode(WINDOW_SIZE)
-#pygame.display.set_caption("Mapa impreso desde el dron: " + str(sys.argv[7]))
 
 
 # Función para dibujar el mapa de bits
@@ -130,22 +119,22 @@ def pygameMapa(listaMapa):
 
     screen.fill((0, 0, 0))
     draw_grid()
+
+
     
-    #listaMapa tiene el siguiente formato [[color, id, (x,y)], [color, id, (x,y)], ...]
-    for drone in listaMapa:
-        color = drone[0]
-        x = drone[2][0]
-        y = drone[2][1]
+    #listaMapa tiene el siguiente formato: [[(color, id), (color, id), ...], [(color, id), (color, id), ...], ...
+    for y, fila in enumerate(listaMapa):
+        for x, elemento in enumerate(fila):
+            color = elemento[0]
 
-        if color == 'R':
-            drone_color = (255, 0, 0)  # Rojo
-        else:
-            drone_color = (0, 255, 0)  # Verde
-
-        drone_rect = pygame.Rect((x-1) * GRID_SIZE, (y-1) * GRID_SIZE, DRONE_SIZE, DRONE_SIZE)
-        pygame.draw.rect(screen, drone_color, drone_rect)
-
-        #pygame.draw.rect(screen, drone_color, (x*20, y*20, DRONE_SIZE, DRONE_SIZE))
+            if color == 'G':
+                drone_color = (0, 255, 0)  # Verde
+                drone_rect = pygame.Rect(x * GRID_SIZE, y * GRID_SIZE, DRONE_SIZE, DRONE_SIZE)
+                pygame.draw.rect(screen, drone_color, drone_rect)
+            elif color == 'R':
+                drone_color = (255, 0, 0)  # Rojo
+                drone_rect = pygame.Rect(x * GRID_SIZE, y * GRID_SIZE, DRONE_SIZE, DRONE_SIZE)
+                pygame.draw.rect(screen, drone_color, drone_rect)
 
     pygame.display.update()
 
@@ -257,17 +246,20 @@ def dronRegistry(ip_reg, puerto_reg, alias):
 
 # conexión con el módulo AD_Engine para darse de alta en el espectaculo
 def dronEngine(ip_eng, puerto_eng, id, token):
-    
-    ADDR = (str(ip_eng), int(puerto_eng))
+    try:
+        ADDR = (str(ip_eng), int(puerto_eng))
 
-    client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    client.connect(ADDR)
-    print(f"Se ha establecido conexión en [{ADDR}]")
-    send(id+","+token, client)
-    message = receive(client)
-    if message == "OK":
-        return True
-    else:
+        client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        client.connect(ADDR)
+        print(f"Se ha establecido conexión en [{ADDR}]")
+        send(id+","+token, client)
+        message = receive(client)
+        if message == "OK":
+            return True
+        else:
+            return False
+    except Exception as exc:
+        print("No se ha podido conectar con el engine: " + str(exc))
         return False
 
     
@@ -332,19 +324,51 @@ if (len(sys.argv) == 8):
     pos_actual = (0,0)
     pos_final = (int,int)
 
+    ############################ PYGAME ############################
+
+    # export LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libstdc++.so.6
+
+    # Inicializa Pygame
+    pygame.init()
+
+    # Definir constantes
+    WINDOW_SIZE = (400, 400)
+    GRID_SIZE = 20
+    DRONE_SIZE = 20
+
+    # Crea la ventana de juego
+    screen = pygame.display.set_mode(WINDOW_SIZE)
+    pygame.display.set_caption("Mapa impreso desde el dron: " + str(sys.argv[7]))
+
+    ################################################################
+
     #Argumentos dronRegistry( IP_Registry, Puerto_Registry, Alias_Dron )
     id, token = dronRegistry(IP_REGISTRY, PUERTO_REGISTRY, ALIAS_DRON)
     print( "id: ", id, " token: ", token)
     
     # conexion con el módulo AD_Engine para darse de alta en el espectaculo
     #Argumentos dronEngine( IP_Engine, Puerto_Engine, ID, Token)
+
     
     if(dronEngine(IP_ENGINE, PUERTO_ENGINE, id, token)):
         # conexion con el módulo AD_Kafka para recibir las ordenes
         #Argumentos consumidor( IP_Kafka, Puerto_Kafka, ID )
-        consumidor_mapas(id, pos_actual, pos_final)
+        engineOnline = True
+        while engineOnline:
+            try:
+                engineOnline = consumidor_mapas(id, pos_actual, pos_final)
+            except Exception as exc:
+                print("Se ha cerrado la conexión inesperadamente con el engine" + str(exc))
+                engineOnline = False
+                print("Vuelvo a casa")
+                while(pos_actual != (1,1)):
+                    pos_actual = run(pos_actual, (1,1))
+                    print("Posicion actualizada -->" + str(pos_actual))
+                    time.sleep(1)
+
     else:
         print("No se ha podido entrar al espectaculo")
+        engineOnline = False
     
 else:
     print("No se ha podido conectar al servidor de registro, los argumentos son <IP_Engine> <Puerto_Engine> <IP_Kafka> <Puerto_Kafka> <IP_Registry> <Puerto_Registry> <Alias_Dron>")
