@@ -8,9 +8,9 @@ import json
 
 IP_Kafka = "localhost"
 
-def consumidor(listaDronMov, num_drones):
+def consumidor(listaDronMov, num_drones, topicMov, topicMap):
     consumer = KafkaConsumer(
-        'movimientos-topic',
+        topicMov,
         auto_offset_reset='earliest',
         enable_auto_commit=True,
         group_id='engine',
@@ -28,14 +28,14 @@ def consumidor(listaDronMov, num_drones):
             print("Dron " + str(m.value[1]) + " finalizado")
 
         if(finalizados == num_drones):
-            productor("FIGURA COMPLETADA")
+            productor("FIGURA COMPLETADA", topicMap)
             finalizados = 0
             volverBase = True
             
 
         actualizarMovimientos(listaDronMov, m.value)
             
-        productor(listaDronMov)
+        productor(listaDronMov, topicMap)
 
         if(volverBase==True):
             enBase = 0
@@ -45,13 +45,13 @@ def consumidor(listaDronMov, num_drones):
             if(enBase == 8):
                 return True
 
-def productor(mapa):
+def productor(mapa, topicMap):
     producer = KafkaProducer(
         value_serializer=lambda m: dumps(m).encode('utf-8'),
         bootstrap_servers=[IP_Kafka + ':9092'])
     
     print("Mapa enviado: " + str(mapa))
-    producer.send("mapas-topic", value=mapa)
+    producer.send(topicMap, value=mapa)
     time.sleep(1)
 
 
@@ -118,26 +118,38 @@ def stringMapa(listaMapa):
 #### main ####
 lista_mapa = manejoFichero()[0][1]
 num_drones = 2 #len(lista_mapa)
+
+topicMap = "mapas1-topic"
+topicMov = "movimientos1-topic"
+
 #envia el mapa
 listaDronMovInicial = [] 
-productor(lista_mapa)
+productor(lista_mapa, topicMap)
 for dronMov in lista_mapa:
     listaDronMovInicial.append(['R', dronMov[0], (1,1)])
 
-
 #empieza a recoger los movimientos de los drones
-if(consumidor(listaDronMovInicial,num_drones)):
+if(consumidor(listaDronMovInicial,num_drones, topicMov, topicMap)):
     print("FIGURA 1 COMPLETADA")
     #Borramos los topics 
      
-delete_topic1 = "gnome-terminal -- bash -c '/home/joanclq/kafka/bin/kafka-topics.sh --delete --topic mapas-topic --bootstrap-server " + IP_Kafka + ":9092; exec bash'"
-delete_topic2 = "gnome-terminal -- bash -c '/home/joanclq/kafka/bin/kafka-topics.sh --delete --topic movimientos-topic --bootstrap-server " + IP_Kafka + ":9092; exec bash'"
+ 
+#time.sleep(5)
+
+topicMap = "mapas2-topic"
+topicMov = "movimientos2-topic"
+
+productor(lista_mapa, topicMap)
+#empieza a recoger los movimientos de los drones
+if(consumidor(listaDronMovInicial,num_drones, topicMov, topicMap)):
+    print("FIGURA 2 COMPLETADA")
+
+
+delete_topic1 = "gnome-terminal -- bash -c '/home/joanclq/kafka/bin/kafka-topics.sh --delete --topic mapas-topic1 --bootstrap-server " + IP_Kafka + ":9092; exec bash'"
+delete_topic2 = "gnome-terminal -- bash -c '/home/joanclq/kafka/bin/kafka-topics.sh --delete --topic movimientos-topic1 --bootstrap-server " + IP_Kafka + ":9092; exec bash'"
 subprocess.run(delete_topic2, shell=True) 
 subprocess.run(delete_topic1, shell=True)
- 
-time.sleep(5)
-
-productor(lista_mapa)
-#empieza a recoger los movimientos de los drones
-if(consumidor(listaDronMovInicial,num_drones)):
-    print("FIGURA 2 COMPLETADA")
+delete_topic1 = "gnome-terminal -- bash -c '/home/joanclq/kafka/bin/kafka-topics.sh --delete --topic mapas-topic2 --bootstrap-server " + IP_Kafka + ":9092; exec bash'"
+delete_topic2 = "gnome-terminal -- bash -c '/home/joanclq/kafka/bin/kafka-topics.sh --delete --topic movimientos-topic2 --bootstrap-server " + IP_Kafka + ":9092; exec bash'"
+subprocess.run(delete_topic2, shell=True) 
+subprocess.run(delete_topic1, shell=True)
