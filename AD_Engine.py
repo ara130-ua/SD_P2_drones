@@ -207,6 +207,13 @@ def manejoClima(conn, addr):
         print(f"Se ha recibido del AD_Weather {addr} los datos de clima: {datos_clima}")
         # guardar en la BBDD
         print(climaBBDD(datos_clima))
+        # saca la temperatura del string datos_clima
+        # si la temperatura es negativa, se envia a los drones a la base
+        for i in datos_clima:
+            if(i == "-"):
+                productor("CLIMA ADVERSO")
+
+
         time.sleep(10)
     print(f"Se ha cerrado la conexión con el AD_Weather {addr}")
 

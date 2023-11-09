@@ -43,7 +43,7 @@ def consumidor_mapas(id_dron, pos_actual, pos_final):
         if((pos_actual[0], pos_actual[1]) == (pos_final[0], pos_final[1]) and figuraCompleta == True):
             return True
 
-        if(m.value == "FIGURA COMPLETADA"):
+        if(m.value == "FIGURA COMPLETADA" or m.value == "CLIMA ADVERSO"):
             pos_final = (1,1)
             figuraCompleta = True
             print("Vuelvo a casa")
@@ -95,20 +95,6 @@ def productor(movimiento):
 #----------------------------------------------------#
 
 ### Funciones para el manejo de pygame ###
-
-# export LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libstdc++.so.6
-
-# Inicializa Pygame
-pygame.init()
-
-# Definir constantes
-WINDOW_SIZE = (400, 400)
-GRID_SIZE = 20
-DRONE_SIZE = 20
-
-# Crea la ventana de juego
-screen = pygame.display.set_mode(WINDOW_SIZE)
-pygame.display.set_caption("Mapa impreso desde el dron: " + str(sys.argv[7]))
 
 
 # Función para dibujar el mapa de bits
@@ -258,7 +244,6 @@ def dronRegistry(ip_reg, puerto_reg, alias):
     return id, token
 
 # conexión con el módulo AD_Engine para darse de alta en el espectaculo
-## NO SE HA PROBADO ##
 def dronEngine(ip_eng, puerto_eng, id, token):
     
     ADDR = (str(ip_eng), int(puerto_eng))
@@ -335,20 +320,46 @@ if (len(sys.argv) == 8):
     pos_actual = (0,0)
     pos_final = (int,int)
 
+    ############################ PYGAME ############################
+
+    # export LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libstdc++.so.6
+
+    # Inicializa Pygame
+    pygame.init()
+
+    # Definir constantes
+    WINDOW_SIZE = (400, 400)
+    GRID_SIZE = 20
+    DRONE_SIZE = 20
+
+    # Crea la ventana de juego
+    screen = pygame.display.set_mode(WINDOW_SIZE)
+    pygame.display.set_caption("Mapa impreso desde el dron: " + str(sys.argv[7]))
+
+    ################################################################
+
     #Argumentos dronRegistry( IP_Registry, Puerto_Registry, Alias_Dron )
     id, token = dronRegistry(IP_REGISTRY, PUERTO_REGISTRY, ALIAS_DRON)
     print( "id: ", id, " token: ", token)
     
     # conexion con el módulo AD_Engine para darse de alta en el espectaculo
     #Argumentos dronEngine( IP_Engine, Puerto_Engine, ID, Token)
-    
-    ## NO SE HA PROBADO ##
-    if(dronEngine(IP_ENGINE, PUERTO_ENGINE, id, token)):
-        # conexion con el módulo AD_Kafka para recibir las ordenes
-        #Argumentos consumidor( IP_Kafka, Puerto_Kafka, ID )
-        consumidor_mapas(id, pos_actual, pos_final)
-    else:
-        print("No se ha podido entrar al espectaculo")
+    engineOnline = True
+    while engineOnline:
+        if(dronEngine(IP_ENGINE, PUERTO_ENGINE, id, token)):
+            # conexion con el módulo AD_Kafka para recibir las ordenes
+            #Argumentos consumidor( IP_Kafka, Puerto_Kafka, ID )
+            engineOnline = True
+            
+            try:
+                engineOnline = consumidor_mapas(id, pos_actual, pos_final)
+            except Exception as exc:
+                print("Se ha cerrado la conexión inesperadamente con el engine" + str(exc))
+                engineOnline = False
+
+        else:
+            print("No se ha podido entrar al espectaculo")
+            engineOnline = False
     
 else:
     print("No se ha podido conectar al servidor de registro, los argumentos son <IP_Engine> <Puerto_Engine> <IP_Kafka> <Puerto_Kafka> <IP_Registry> <Puerto_Registry> <Alias_Dron>")
