@@ -359,6 +359,11 @@ if (len(sys.argv) == 8):
             except Exception as exc:
                 print("Se ha cerrado la conexión inesperadamente con el engine" + str(exc))
                 engineOnline = False
+                print("Vuelvo a casa")
+                while(pos_actual != (1,1)):
+                    pos_actual = run(pos_actual, (1,1))
+                    print("Posicion actualizada -->" + str(pos_actual))
+                    time.sleep(1)
 
     else:
         print("No se ha podido entrar al espectaculo")
