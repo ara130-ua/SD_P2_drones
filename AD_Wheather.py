@@ -19,9 +19,6 @@ def send(msg, cliente):
     cliente.send(message)
 
    
-        
-    
-
 def conexionEngine():
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server.bind((SERVER, PORT))
@@ -76,9 +73,12 @@ def manejoFicheroClima():
 
 
 # main
-# Añadir el puerto del AD_Wheather
+# puerto del AD_Wheather
 
-print("Bienvenido al AD_Wheather")
-datosClima = manejoFicheroClima()
-conexionEngine()
+if (len(sys.argv) == 2):
+    print("Bienvenido al AD_Wheather")
+    datosClima = manejoFicheroClima()
+    conexionEngine()
+else:
+    print("Error en los parámetros de entrada, necesito estos argumentos AD_Wheather <Puerto de escucha>")
 
