@@ -55,11 +55,13 @@ def consumidor_mapas(id_dron, pos_actual, pos_final):
         if(primerConsumidorBool == False and (pos_actual[0], pos_actual[1]) == (pos_final[0], pos_final[1]) and listaDronMov[0] != 'G'):
             listaDronMov[0] = 'G'
             productor(listaDronMov)
-            print(stringMapa(crearMapa(m.value)))
+            #print(stringMapa(crearMapa(m.value)))
+            pygameMapa(crearMapa(m.value))
 
         elif(primerConsumidorBool == False and isMapaActualizado(m.value, pos_actual, id_dron) and (pos_actual[0], pos_actual[1]) != (pos_final[0], pos_final[1])):
             # crear y pintar el mapa
-            print(stringMapa(crearMapa(m.value)))
+            #print(stringMapa(crearMapa(m.value)))
+            pygameMapa(crearMapa(m.value))
 
             pos_actual = run(pos_actual, pos_final)
             print("Posicion actualizada -->" + str(pos_actual))
@@ -75,7 +77,8 @@ def consumidor_mapas(id_dron, pos_actual, pos_final):
             productor(listaDronMov)
             primerConsumidorBool = False
         else:
-            print(stringMapa(crearMapa(m.value)))
+            #print(stringMapa(crearMapa(m.value)))
+            pygameMapa(crearMapa(m.value))
             
             
 #manda los movimientos al topic de los moviemtos
@@ -96,16 +99,16 @@ def productor(movimiento):
 # export LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libstdc++.so.6
 
 # Inicializa Pygame
-#pygame.init()
+pygame.init()
 
 # Definir constantes
-#WINDOW_SIZE = (400, 400)
-#GRID_SIZE = 20
-#DRONE_SIZE = 20
+WINDOW_SIZE = (400, 400)
+GRID_SIZE = 20
+DRONE_SIZE = 20
 
 # Crea la ventana de juego
-#screen = pygame.display.set_mode(WINDOW_SIZE)
-#pygame.display.set_caption("Mapa impreso desde el dron: " + str(sys.argv[7]))
+screen = pygame.display.set_mode(WINDOW_SIZE)
+pygame.display.set_caption("Mapa impreso desde el dron: " + str(sys.argv[7]))
 
 
 # Función para dibujar el mapa de bits
@@ -130,22 +133,22 @@ def pygameMapa(listaMapa):
 
     screen.fill((0, 0, 0))
     draw_grid()
+
+
     
-    #listaMapa tiene el siguiente formato [[color, id, (x,y)], [color, id, (x,y)], ...]
-    for drone in listaMapa:
-        color = drone[0]
-        x = drone[2][0]
-        y = drone[2][1]
+    #listaMapa tiene el siguiente formato: [[(color, id), (color, id), ...], [(color, id), (color, id), ...], ...
+    for y, fila in enumerate(listaMapa):
+        for x, elemento in enumerate(fila):
+            color = elemento[0]
 
-        if color == 'R':
-            drone_color = (255, 0, 0)  # Rojo
-        else:
-            drone_color = (0, 255, 0)  # Verde
-
-        drone_rect = pygame.Rect((x-1) * GRID_SIZE, (y-1) * GRID_SIZE, DRONE_SIZE, DRONE_SIZE)
-        pygame.draw.rect(screen, drone_color, drone_rect)
-
-        #pygame.draw.rect(screen, drone_color, (x*20, y*20, DRONE_SIZE, DRONE_SIZE))
+            if color == 'G':
+                drone_color = (0, 255, 0)  # Verde
+                drone_rect = pygame.Rect(x * GRID_SIZE, y * GRID_SIZE, DRONE_SIZE, DRONE_SIZE)
+                pygame.draw.rect(screen, drone_color, drone_rect)
+            elif color == 'R':
+                drone_color = (255, 0, 0)  # Rojo
+                drone_rect = pygame.Rect(x * GRID_SIZE, y * GRID_SIZE, DRONE_SIZE, DRONE_SIZE)
+                pygame.draw.rect(screen, drone_color, drone_rect)
 
     pygame.display.update()
 
