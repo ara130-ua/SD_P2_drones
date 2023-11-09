@@ -302,6 +302,31 @@ def actualizarMovimientos(listaDronMov, dronMov):
         if(dron[1] == int(dronMov[1])):
             dron[2] = (dronMov[2][0], dronMov[2][1])
             return listaDronMov
+        
+# listaDronMovActuales = [['R', ID, (X,Y)], ['R',ID,(X,Y)], ...]
+def crearMapa(listaDronMovActuales):
+    mapaBytes = [[0 for _ in range(20)] for _ in range(20)]
+    listaMapa = []
+  
+    for coordX in mapaBytes:
+        listaCoordX = []
+        for coordY in coordX:
+            listaCoordX.append(('E', 0))
+        listaMapa.append(listaCoordX)
+        
+        
+    for dron in listaDronMovActuales:
+        listaMapa = actualizaMapa(listaMapa, dron)
+
+    return(listaMapa)
+
+# dronMov = [(ID,(X,Y))]
+def actualizaMapa(listaMapa, dronMov):
+    estado = 'G'
+    Id = dronMov[0]
+    movimiento = (int(dronMov[1][0])-1, int(dronMov[1][1])-1)
+    listaMapa[movimiento[0]][movimiento[1]] = (estado, Id)
+    return listaMapa
        
 
 def stringMapa(listaMapa):
@@ -381,6 +406,7 @@ if  (len(sys.argv) == 7):
                             if(opcionFiguraSelec == "1"):
                                 os.system("clear")
                                 print("Mostrando figura final")
+                                print(stringMapa(crearMapa(listaMapa)))
                                 # mostrar figura final
                             elif(opcionFiguraSelec == "2"):
                                 os.system("clear")

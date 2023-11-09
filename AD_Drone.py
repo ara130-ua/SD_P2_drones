@@ -350,12 +350,11 @@ if (len(sys.argv) == 8):
     # conexion con el módulo AD_Engine para darse de alta en el espectaculo
     #Argumentos dronEngine( IP_Engine, Puerto_Engine, ID, Token)
 
-    
-    if(dronEngine(IP_ENGINE, PUERTO_ENGINE, id, token)):
-        # conexion con el módulo AD_Kafka para recibir las ordenes
-        #Argumentos consumidor( IP_Kafka, Puerto_Kafka, ID )
-        engineOnline = True
-        while engineOnline:
+    engineOnline = True
+    while engineOnline:
+        if(dronEngine(IP_ENGINE, PUERTO_ENGINE, id, token)):
+            # conexion con el módulo AD_Kafka para recibir las ordenes
+            #Argumentos consumidor( IP_Kafka, Puerto_Kafka, ID )
             try:
                 engineOnline = consumidor_mapas(id, pos_actual, pos_final)
 
@@ -384,9 +383,9 @@ if (len(sys.argv) == 8):
                 pos_final = (int,int)
             else:
                 engineOnline = False
-    else:
-        print("No se ha podido entrar al espectaculo")
-        engineOnline = False
+        else:
+            print("No se ha podido entrar al espectaculo")
+            engineOnline = False
     
 else:
     print("No se ha podido conectar al servidor de registro, los argumentos son <IP_Engine> <Puerto_Engine> <IP_Kafka> <Puerto_Kafka> <IP_Registry> <Puerto_Registry> <Alias_Dron>")
