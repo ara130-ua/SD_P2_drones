@@ -3,7 +3,6 @@ import subprocess
 import threading
 import sys
 import sqlite3
-import datetime #¿? si sepuede, quitalo 
 import time
 import json
 import os
@@ -216,7 +215,6 @@ def manejoClima(conn, addr):
 
 ### Funciones que manejan la conexion con los drones ###
 
-# no está testado #
 def manejoTokenDrones(conn, addr):
     print(f"Se ha conectado el dron {addr}")
 
@@ -235,12 +233,9 @@ def manejoTokenDrones(conn, addr):
             return False
 
                 
-
-
-# no está testado #
 def autentificacionDrones(numDrones, numDronesFigura):
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server.bind(ADDR_ENGINE) # esto habrá que cambiarlo por la ip del engine y puerto del engine
+    server.bind(ADDR_ENGINE) 
     print(f"AD_Engine escuchando en  {ADDR_ENGINE}")
     terminados = 0
     for i in range(numDrones):
@@ -255,7 +250,6 @@ def autentificacionDrones(numDrones, numDronesFigura):
         print("Todos los drones se han conectado")
         return True
     
-        
 
 
 ### Funciones que manejan la conexion con los drones ###

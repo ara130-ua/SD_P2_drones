@@ -200,6 +200,16 @@ def isMapaActualizado(listaDronMov, pos_actual,id_dron):
             return True
     return False
 
+def stringMapa(listaMapa):
+    strMapa = ""
+    for fila in listaMapa:
+        strMapa = strMapa + "| "
+        for elemento in fila:
+            strMapa = strMapa + "[" + elemento[0] + "," + str(elemento[1]) + "] "
+        strMapa = strMapa + "|\n"
+
+    return strMapa
+
 # listaDronMovActuales = [['R', ID, (X,Y)], ['R',ID,(X,Y)], ...]
 def crearMapa(listaDronMovActuales):
     mapaBytes = [[0 for _ in range(20)] for _ in range(20)]
@@ -225,15 +235,6 @@ def actualizaMapa(listaMapa, dronMov):
     listaMapa[movimiento[0]][movimiento[1]] = (estado, Id)
     return listaMapa
 
-def stringMapa(listaMapa):
-    strMapa = ""
-    for fila in listaMapa:
-        strMapa = strMapa + "| "
-        for elemento in fila:
-            strMapa = strMapa + "[" + elemento[0] + "," + str(elemento[1]) + "] "
-        strMapa = strMapa + "|\n"
-
-    return strMapa
 
 ### Funciones para el manejo de mapas ###
         
