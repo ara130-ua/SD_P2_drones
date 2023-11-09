@@ -6,6 +6,7 @@ from json import loads
 from json import dumps
 import time
 import random
+import pygame
 
 
 HEADER = 64
@@ -38,7 +39,7 @@ def consumidor_mapas(id_dron, pos_actual, pos_final):
     figuraCompleta = False
     
     for m in consumer:
-
+        print("Recibido mapa: " + str(m.value))
         if((pos_actual[0], pos_actual[1]) == (pos_final[0], pos_final[1]) and figuraCompleta == True):
             return True
 
@@ -87,6 +88,69 @@ def productor(movimiento):
     time.sleep(1)
         
 ### Funciones para el manejo de kafka ###
+
+#----------------------------------------------------#
+
+### Funciones para el manejo de pygame ###
+
+# export LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libstdc++.so.6
+
+# Inicializa Pygame
+#pygame.init()
+
+# Definir constantes
+#WINDOW_SIZE = (400, 400)
+#GRID_SIZE = 20
+#DRONE_SIZE = 20
+
+# Crea la ventana de juego
+#screen = pygame.display.set_mode(WINDOW_SIZE)
+#pygame.display.set_caption("Mapa impreso desde el dron: " + str(sys.argv[7]))
+
+
+# Función para dibujar el mapa de bits
+def draw_grid():
+    for x in range(0, WINDOW_SIZE[0], GRID_SIZE):
+        pygame.draw.line(screen, (255, 255, 255), (x, 0), (x, WINDOW_SIZE[1]))
+    for y in range(0, WINDOW_SIZE[1], GRID_SIZE):
+        pygame.draw.line(screen, (255, 255, 255), (0, y), (WINDOW_SIZE[0], y))
+
+
+def pygameMapa(listaMapa):
+
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            pygame.quit()
+            sys.exit()
+
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            pygame.quit()
+            sys.exit()
+
+    screen.fill((0, 0, 0))
+    draw_grid()
+    
+    #listaMapa tiene el siguiente formato [[color, id, (x,y)], [color, id, (x,y)], ...]
+    for drone in listaMapa:
+        color = drone[0]
+        x = drone[2][0]
+        y = drone[2][1]
+
+        if color == 'R':
+            drone_color = (255, 0, 0)  # Rojo
+        else:
+            drone_color = (0, 255, 0)  # Verde
+
+        drone_rect = pygame.Rect((x-1) * GRID_SIZE, (y-1) * GRID_SIZE, DRONE_SIZE, DRONE_SIZE)
+        pygame.draw.rect(screen, drone_color, drone_rect)
+
+        #pygame.draw.rect(screen, drone_color, (x*20, y*20, DRONE_SIZE, DRONE_SIZE))
+
+    pygame.display.update()
+
+
+### Funciones para el manejo de pygame ###
 
 #----------------------------------------------------#
 
@@ -265,6 +329,9 @@ if (len(sys.argv) == 8):
 
     ALIAS_DRON = sys.argv[7]
 
+    pos_actual = (0,0)
+    pos_final = (int,int)
+
     #Argumentos dronRegistry( IP_Registry, Puerto_Registry, Alias_Dron )
     id, token = dronRegistry(IP_REGISTRY, PUERTO_REGISTRY, ALIAS_DRON)
     print( "id: ", id, " token: ", token)
@@ -276,7 +343,7 @@ if (len(sys.argv) == 8):
     if(dronEngine(IP_ENGINE, PUERTO_ENGINE, id, token)):
         # conexion con el módulo AD_Kafka para recibir las ordenes
         #Argumentos consumidor( IP_Kafka, Puerto_Kafka, ID )
-        consumidor_mapas(IP_KAFKA, PUERTO_KAFKA, id)
+        consumidor_mapas(id, pos_actual, pos_final)
     else:
         print("No se ha podido entrar al espectaculo")
     

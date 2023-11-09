@@ -3,7 +3,7 @@ import random
 import time
 import sys
 
-SERVER = "192.168.108.179" #socket.gethostbyname(socket.gethostname())
+SERVER = "localhost" #socket.gethostbyname(socket.gethostname())
 PORT = int(sys.argv[1])
 FORMAT = 'utf-8'
 HEADER = 64
