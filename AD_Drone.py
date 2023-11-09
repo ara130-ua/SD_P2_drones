@@ -19,7 +19,7 @@ FORMAT = 'utf-8'
 #devuelve todos los mapas segun llegan al topic
 def consumidor_mapas(id_dron, pos_actual, pos_final):
     consumer = KafkaConsumer(
-        'mapas-topic',
+        'mapas1-topic',
         auto_offset_reset='earliest',
         enable_auto_commit=True,
         group_id = id_dron,
@@ -83,7 +83,7 @@ def productor(movimiento):
         value_serializer=lambda m: dumps(m).encode('utf-8'),
         bootstrap_servers=[ADDR_KAFKA])
 
-    producer.send("movimientos-topic", value=movimiento)
+    producer.send("movimientos1-topic", value=movimiento)
     time.sleep(1)
         
 ### Funciones para el manejo de kafka ###

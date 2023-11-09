@@ -26,12 +26,12 @@ def productor(mapa):
         bootstrap_servers=[ADDR_BROKER])
     
     print("Mapa enviado: " + str(mapa))
-    producer.send("mapas-topic", value=mapa)
+    producer.send('mapas1-topic', value=mapa)
     time.sleep(1)
 
 def consumidor(listaDronMov, num_drones):
     consumer = KafkaConsumer(
-        'movimientos-topic',
+        'movimientos1-topic',
         auto_offset_reset='earliest',
         enable_auto_commit=True,
         group_id='engine',
@@ -78,8 +78,8 @@ def espectaculo(listaMapa, numMaxDrones):
         if(consumidor(listaDronMovInicial, len(listaMapa))):
             print("Figura finalizada")
 
-        delete_topic1 = "gnome-terminal -- bash -c '/home/joanclq/kafka/bin/kafka-topics.sh --delete --topic mapas-topic --bootstrap-server " + ADDR_BROKER + "; exec bash'"
-        delete_topic2 = "gnome-terminal -- bash -c '/home/joanclq/kafka/bin/kafka-topics.sh --delete --topic movimientos-topic --bootstrap-server " + ADDR_BROKER + "; exec bash'"
+        delete_topic1 = "gnome-terminal -- bash -c '/home/joanclq/kafka/bin/kafka-topics.sh --delete --topic mapas1-topic --bootstrap-server " + ADDR_BROKER + "; exec bash'"
+        delete_topic2 = "gnome-terminal -- bash -c '/home/joanclq/kafka/bin/kafka-topics.sh --delete --topic movimientos1-topic --bootstrap-server " + ADDR_BROKER + "; exec bash'"
         subprocess.run(delete_topic2, shell=True) 
         subprocess.run(delete_topic1, shell=True)
         # si hace algo raro time.sleep(5)
