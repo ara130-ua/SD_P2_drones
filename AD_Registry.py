@@ -40,6 +40,7 @@ def manejo_dron(conn, addr):
             print("Se ha cerrado la conexión inesperadamente")
             conn.close()
         if msg_length:
+            print(f"Se ha recibido del dron {addr}: {msg_length}")
             msg_length = int(msg_length)
             alias = conn.recv(msg_length).decode(FORMAT)
             print(f"Se ha recibido del dron {addr} el alias: {alias}")

@@ -186,7 +186,9 @@ def dronRegistry(ip_reg, puerto_reg, alias):
     client.connect(ADDR)
     print(f"Se ha establecido conexión en [{ADDR}]")
     send(alias, client)
-    return receive(client)
+    message = receive(client)
+    id, token = message.split(",")
+    return id, token
 
 # conexión con el módulo AD_Engine para darse de alta en el espectaculo
 ## NO SE HA PROBADO ##
@@ -198,14 +200,12 @@ def dronEngine(ip_eng, puerto_eng, id, token):
     client.connect(ADDR)
     print(f"Se ha establecido conexión en [{ADDR}]")
     send(id+","+token, client)
-    respEngine = client.recv(HEADER).decode(FORMAT)
-    print("Respuesta del engine: ", respEngine)
-    if respEngine == "OK":
-        print("Se ha dado de alta en el espectaculo")
+    message = receive(client)
+    if message == "OK":
         return True
     else:
-        print("No se ha podido dar de alta en el espectaculo")
         return False
+
     
 ### Funciones de conexión con los módulos ###
 
@@ -218,22 +218,27 @@ def send(msg, client):
     msg_length = len(message)
     send_length = str(msg_length).encode(FORMAT)
     send_length += b' ' * (HEADER - len(send_length))
+    print("Enviando mensaje: ", send_length)
     client.send(send_length)
     print("Enviando mensaje: ", message)
     client.send(message)
     
 # este método solo se usa con el registry ya que le da un formato al mensaje
 def receive(client):
-    msg_length = client.recv(HEADER).decode(FORMAT)
+    try:
+        msg_length = client.recv(HEADER).decode(FORMAT)
+    except Exception as exc:
+        print("Se ha cerrado la conexión inesperadamente")
+        client.close()
     if msg_length:
         msg_length = int(msg_length)
         msg = client.recv(msg_length).decode(FORMAT)
         print(f"Se ha recibido del servidor: {msg}")
-        id, token = msg.split(",")
-        return id, token
+        return msg
     else:
         print("No se ha recibido nada del servidor")
         return None
+    
     
 ### Funciones de send y receive ###
 
@@ -272,6 +277,8 @@ if (len(sys.argv) == 8):
         # conexion con el módulo AD_Kafka para recibir las ordenes
         #Argumentos consumidor( IP_Kafka, Puerto_Kafka, ID )
         consumidor_mapas(IP_KAFKA, PUERTO_KAFKA, id)
+    else:
+        print("No se ha podido entrar al espectaculo")
     
 else:
     print("No se ha podido conectar al servidor de registro, los argumentos son <IP_Engine> <Puerto_Engine> <IP_Kafka> <Puerto_Kafka> <IP_Registry> <Puerto_Registry> <Alias_Dron>")

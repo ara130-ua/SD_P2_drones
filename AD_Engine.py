@@ -98,7 +98,7 @@ def send(msg, client):
     send_length = str(msg_length).encode(FORMAT)
     send_length += b' ' * (HEADER - len(send_length))
     try:
-        #client.send(send_length)
+        client.send(send_length)
         print("Enviando mensaje: ", message)
         client.send(message)
     except Exception as exc:
@@ -109,12 +109,13 @@ def receive(client):
     try:
         msg_length = client.recv(HEADER).decode(FORMAT)
         if msg_length:
+            print(f"Se ha recibido algo {msg_length}")
             msg_length = int(msg_length)
             msg = client.recv(msg_length).decode(FORMAT)
             print(f"Se ha recibido: {msg}")
             return msg
         else:
-            print("No se ha recibido nada")
+            #print("No se ha recibido nada")
             return None
     except:
         print("No se ha encontrado conexión o se ha caido")
@@ -218,48 +219,41 @@ def manejoClima(conn, addr):
 # no está testado #
 def manejoTokenDrones(conn, addr):
     print(f"Se ha conectado el dron {addr}")
-    conectado = True
-    terminados = 0
-    while conectado:
-        try:
-            msg_length = conn.recv(HEADER).decode(FORMAT)
-        except Exception as exc:
-            print("Se ha cerrado la conexión inesperadamente")
-            conn.close()
-            # msg_length = id,token
-        if msg_length:
-            msg_length = int(msg_length)
-            id, token = conn.recv(msg_length).decode(FORMAT).split(",")
-            print(f"Se ha recibido del dron {addr} con id: {id} el token: {token}")
-            # leemos de la base de datos el token del dron con la id recibida
-            # si coinciden devolvemos True
-            # si no coinciden devolvemos False
-            if(str(leerTokenDron(id)) == token):
-                send("OK", conn)
-                print("Token correcto")
-                terminados = terminados + 1
-            else:
-                send("KO", conn)
-                print("Token incorrecto")
+
+    tokenDron = receive(conn)
+    if tokenDron:
+        id, token = tokenDron.split(",")
+        print(f"Se ha recibido del dron {addr} con id: {id} el token: {token}")
+        # leemos de la base de datos el token del dron con la id recibida
+        if(str(leerTokenDron(id)) == token):
+            send("OK", conn)
+            print("Token correcto")
+            return True
+        else:
+            send("KO", conn)
+            print("Token incorrecto")
+            return False
+
+                
 
 
 # no está testado #
-def autentificacionDrones(numDrones):
+def autentificacionDrones(numDrones, numDronesFigura):
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server.bind(ADDR_ENGINE) # esto habrá que cambiarlo por la ip del engine y puerto del engine
     print(f"AD_Engine escuchando en  {ADDR_ENGINE}")
-    server.listen()
-    conn, addr = server.accept()
+    terminados = 0
+    for i in range(numDrones):
+        server.listen()
+        conn, addr = server.accept()
+        if manejoTokenDrones(conn, addr):
+            terminados = terminados + 1
     # conexion con el número de drones que vayan a participar en la figura
     # en el caso de que no se conecten todos, se cancela el espectaculo
-    autenticados = manejoTokenDrones(conn, addr)
-
-    if(autenticados == numDrones):
-        print("Todos los drones han sido autenticados")
+    # comprobar que todos los drones se han conectado
+    if(terminados == numDronesFigura):
+        print("Todos los drones se han conectado")
         return True
-    else:
-        print("Ha habido un problema con la autenticación de los drones")
-        return False
     
         
 
@@ -333,7 +327,7 @@ if  (len(sys.argv) == 7):
     
     # zona de argumentos
     
-    numDrones = int(sys.argv[2])
+    numMaxDrones = int(sys.argv[2])
     PORT_ENGINE = int(sys.argv[1])
     ADDR_ENGINE = (SERVER, PORT_ENGINE)
 
@@ -373,6 +367,7 @@ if  (len(sys.argv) == 7):
                     if(int(opcionFigura) < iterador and int(opcionFigura) > 0):
                         os.system("clear")
                         opcFiguraSelecBool = True
+                        listaMapa = figuras[int(opcionFigura)-1][1]
                         while(opcFiguraSelecBool):
                             print("Has seleccionado la figura: " + str(figuras[int(opcionFigura)-1][0]))
                             print("Elige una opción:")
@@ -390,19 +385,19 @@ if  (len(sys.argv) == 7):
                                 os.system("clear")
                                 print("Mostrando figura simplificada")
                                 # mostrar figura simplificada
-                                print(figuras[int(opcionFigura)-1][1])
+                                print(listaMapa)
                             elif(opcionFiguraSelec == "3"):
                                 os.system("clear")
                                 print("Comenzando espectaculo")
                                 # comenzar espectaculo
                         
                                 # Autenticación de los drones
-                                if(autentificacionDrones(numDrones)):
+                                if(autentificacionDrones(numMaxDrones, len(listaMapa))):
                                 
                                     print("Servidor clima")
                                     conexionClima(IP_WEATHER, PORT_WEATHER)
 
-                                    espectaculo(figuras[int(opcionFigura)-1][1], numDrones)
+                                    espectaculo(listaMapa, numMaxDrones)
 
                                     
                                     # Hacer un bucle que cada x tiempo lea la BBDD y si hay un cambio en la temperatura (negativo)
