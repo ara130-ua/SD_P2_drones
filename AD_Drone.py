@@ -256,7 +256,6 @@ def dronRegistry(ip_reg, puerto_reg, alias):
     return id, token
 
 # conexión con el módulo AD_Engine para darse de alta en el espectaculo
-## NO SE HA PROBADO ##
 def dronEngine(ip_eng, puerto_eng, id, token):
     
     ADDR = (str(ip_eng), int(puerto_eng))
@@ -340,7 +339,6 @@ if (len(sys.argv) == 8):
     # conexion con el módulo AD_Engine para darse de alta en el espectaculo
     #Argumentos dronEngine( IP_Engine, Puerto_Engine, ID, Token)
     
-    ## NO SE HA PROBADO ##
     if(dronEngine(IP_ENGINE, PUERTO_ENGINE, id, token)):
         # conexion con el módulo AD_Kafka para recibir las ordenes
         #Argumentos consumidor( IP_Kafka, Puerto_Kafka, ID )
