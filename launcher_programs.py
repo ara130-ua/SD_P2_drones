@@ -3,7 +3,7 @@ import time
 
 #ejecutar en terminal del sistema
 
-
+bbddRemove = "gnome-terminal -- bash -c 'rm bd1.db; exec bash '"
 bbdd = "gnome-terminal -- bash -c 'python BBDD.py; exec bash '"
 kafka = "gnome-terminal -- bash -c 'python launcher_kafka.py; exec bash '"
 engine = "gnome-terminal -- bash -c 'python AD_Engine.py 8050 8 localhost 9092 localhost 7050 ; exec bash '"
@@ -15,6 +15,7 @@ drones = "gnome-terminal -- bash -c 'python launcher_drones.py; exec bash '"
 
 
 # Ejecutar los comandos en terminales separadas
+subprocess.run(bbddRemove, shell=True)
 subprocess.run(bbdd, shell=True)
 time.sleep(2)
 subprocess.run(kafka, shell=True)
