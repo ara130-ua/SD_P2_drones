@@ -5,6 +5,7 @@ from json import dumps
 import time
 import random
 import sys
+import pygame
 
 IP_KAFKA = "localhost"
 
@@ -24,9 +25,9 @@ IP_KAFKA = "localhost"
     
 
 #devuelve todos los mapas segun llegan al topic
-def consumidor_mapas(id_dron, pos_actual, pos_final):
+def consumidor_mapas(id_dron, pos_actual, pos_final,topicMap, topicMov):
     consumer = KafkaConsumer(
-        'mapas-topic',
+        topicMap,
         auto_offset_reset='earliest',
         enable_auto_commit=True,
         group_id = id_dron,
@@ -55,33 +56,36 @@ def consumidor_mapas(id_dron, pos_actual, pos_final):
             print("Vuelvo a casa")
             pos_actual = run(pos_actual, pos_final)
             listaDronMov = ['R', id_dron, pos_actual]
-            productor(listaDronMov)
+            productor(listaDronMov, topicMov)
             continue
 
         if(primerConsumidorBool == False and (pos_actual[0], pos_actual[1]) == (pos_final[0], pos_final[1]) and listaDronMov[0] != 'G'):
             listaDronMov[0] = 'G'
-            productor(listaDronMov)
-            print(stringMapa(crearMapa(m.value)))
+            productor(listaDronMov, topicMov)
+            #print(stringMapa(crearMapa(m.value)))
+            pygameMapa(m.value)
 
         elif(primerConsumidorBool == False and isMapaActualizado(m.value, pos_actual, id_dron) and (pos_actual[0], pos_actual[1]) != (pos_final[0], pos_final[1])):
             # crear y pintar el mapa
-            print(stringMapa(crearMapa(m.value)))
+            #print(stringMapa(crearMapa(m.value)))
+            pygameMapa(m.value)
 
             pos_actual = run(pos_actual, pos_final)
             print("Posicion actualizada -->" + str(pos_actual))
             listaDronMov[2] = pos_actual
             # ['R', ID, (X,Y)]
-            productor(listaDronMov)
+            productor(listaDronMov, topicMov)
 
         elif(primerConsumidorBool):
             pos_final = saca_pos_final(m.value, int(id_dron))
             print("La posicion a la que tengo que ir: "+ str(pos_final))
             pos_actual = run(pos_actual, pos_final)
             listaDronMov = ['R', id_dron, pos_actual]
-            productor(listaDronMov)
+            productor(listaDronMov, topicMov)
             primerConsumidorBool = False
         else:
-            print(stringMapa(crearMapa(m.value)))
+            #print(stringMapa(crearMapa(m.value)))
+            pygameMapa(m.value)
 
    
 
@@ -94,12 +98,12 @@ def isMapaActualizado(listaDronMov, pos_actual,id_dron):
     
 
 #manda los movimientos al topic de los moviemtos
-def productor(movimiento):
+def productor(movimiento, topicMov):
     producer = KafkaProducer(
         value_serializer=lambda m: dumps(m).encode('utf-8'),
         bootstrap_servers=[IP_KAFKA + ':9092'])
 
-    producer.send("movimientos-topic", value=movimiento)
+    producer.send(topicMov, value=movimiento)
     time.sleep(1)
 
 def run(pos_actual, pos_final):
@@ -159,6 +163,61 @@ def stringMapa(listaMapa):
         strMapa = strMapa + "|\n"
 
     return strMapa
+
+# Inicializa Pygame
+pygame.init()
+
+# Definir constantes
+WINDOW_SIZE = (400, 400)
+GRID_SIZE = 20
+DRONE_SIZE = 20
+
+# Crea la ventana de juego
+screen = pygame.display.set_mode(WINDOW_SIZE)
+pygame.display.set_caption("Mapa impreso desde el dron: " + str(sys.argv[1]))
+
+
+# Función para dibujar el mapa de bits
+def draw_grid():
+    for x in range(0, WINDOW_SIZE[0], GRID_SIZE):
+        pygame.draw.line(screen, (255, 255, 255), (x, 0), (x, WINDOW_SIZE[1]))
+    for y in range(0, WINDOW_SIZE[1], GRID_SIZE):
+        pygame.draw.line(screen, (255, 255, 255), (0, y), (WINDOW_SIZE[0], y))
+
+
+def pygameMapa(listaMapa):
+
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            pygame.quit()
+            sys.exit()
+
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            pygame.quit()
+            sys.exit()
+
+    screen.fill((0, 0, 0))
+    draw_grid()
+    
+    #listaMapa tiene el siguiente formato [[color, id, (x,y)], [color, id, (x,y)], ...]
+    for drone in listaMapa:
+        color = drone[0]
+        x = drone[2][0]
+        y = drone[2][1]
+
+        if color == 'R':
+            drone_color = (255, 0, 0)  # Rojo
+        else:
+            drone_color = (0, 255, 0)  # Verde
+
+        drone_rect = pygame.Rect((x-1) * GRID_SIZE, (y-1) * GRID_SIZE, DRONE_SIZE, DRONE_SIZE)
+        pygame.draw.rect(screen, drone_color, drone_rect)
+
+        #pygame.draw.rect(screen, drone_color, (x*20, y*20, DRONE_SIZE, DRONE_SIZE))
+
+    pygame.display.update()
+
     
 def saca_pos_final(listaFigura, id_dron):
     #saca la posicion final del mapa
@@ -196,13 +255,16 @@ engineConn = True
 #saca la posicion a la que tendra que llegar el dron
 #pos_final = saca_pos_final(mapa, int(id_dron))
 #print("La posicion a la que tengo que ir: "+ str(pos_final))
+topicMap = "mapas1-topic"
+topicMov = "movimientos1-topic"
 
-
-consumidor_mapas(id_dron, pos_actual, pos_final)
-time.sleep(5)
+consumidor_mapas(id_dron, pos_actual, pos_final, topicMap, topicMov)
+#time.sleep(10)
 
 print("Empezamos la segunda figura")
 pos_actual = (0,0)
 pos_final = (int,int)
 
-consumidor_mapas(id_dron, pos_actual, pos_final)
+topicMap = "mapas2-topic"
+topicMov = "movimientos2-topic"
+consumidor_mapas(id_dron, pos_actual, pos_final, topicMap, topicMov)

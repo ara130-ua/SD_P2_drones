@@ -3,18 +3,33 @@ import time
 
 #ejecutar en terminal del sistema
 
-# Creamos la BBDD
-bbdd = "gnome-terminal -- bash -c 'python /home/joanclq/Documents/SD/SD_P2_drones/BBDD.py; exec bash '"
 
-# Lanzamos el registry
-registry = "gnome-terminal -- bash -c 'python /home/joanclq/Documents/SD/SD_P2_drones/AD_Registry.py; exec bash '"
+bbdd = "gnome-terminal -- bash -c 'python BBDD.py; exec bash '"
+kafka = "gnome-terminal -- bash -c 'python launcher_kafka.py; exec bash '"
+engine = "gnome-terminal -- bash -c 'python AD_Engine.py 8050 8 localhost 9092 localhost 7050 ; exec bash '"
+registry = "gnome-terminal -- bash -c 'python AD_Registry.py 6050; exec bash '"
+weather = "gnome-terminal -- bash -c 'python AD_Wheather.py 7050; exec bash '"
 
 # Lanzamos dron
-drones = "gnome-terminal -- bash -c 'python /home/joanclq/Documents/SD/SD_P2_drones/AD_Drone.py; exec bash '"
+drones = "gnome-terminal -- bash -c 'python launcher_drones.py; exec bash '"
 
 
-subprocess.Popen(bbdd, shell=True)
+# Ejecutar los comandos en terminales separadas
+subprocess.run(bbdd, shell=True)
 time.sleep(2)
-subprocess.Popen(registry, shell=True)
+subprocess.run(kafka, shell=True)
 time.sleep(2)
-subprocess.Popen(drones, shell=True)
+subprocess.run(engine, shell=True)
+time.sleep(2)
+subprocess.run(registry, shell=True)
+time.sleep(2)
+subprocess.run(weather, shell=True)
+time.sleep(2)
+
+print("Pulse enter para lanzar los drones")
+input()
+
+subprocess.run(drones, shell=True)
+time.sleep(2)
+
+
