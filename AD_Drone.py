@@ -53,7 +53,7 @@ def consumidor_mapas(id_dron, pos_actual, pos_final):
             productor(listaDronMov)
             continue
 
-        if(primerConsumidorBool == False and (pos_actual[0], pos_actual[1]) == (pos_final[0], pos_final[1]) and listaDronMov[0] != 'G'):
+        if(primerConsumidorBool == False and (pos_actual[0], pos_actual[1]) == (pos_final[0], pos_final[1]) ):
             listaDronMov[0] = 'G'
             productor(listaDronMov)
             #print(stringMapa(crearMapa(m.value)))

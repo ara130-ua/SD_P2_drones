@@ -10,6 +10,7 @@ from kafka import KafkaProducer
 from json import dumps
 from json import loads
 from kafka import KafkaConsumer
+import pygame
 
 HEADER = 64
 FORMAT = 'utf-8'
@@ -43,17 +44,18 @@ def consumidor(listaDronMov, num_drones):
 
     for m in consumer:
         
+        actualizarMovimientos(listaDronMov, m.value)
+
         if(m.value[0] == 'G'):
             finalizados = finalizados + 1
             print("Dron " + str(m.value[1]) + " finalizado")
 
         if(finalizados == num_drones):
+            productor(listaDronMov)
             productor("FIGURA COMPLETADA")
             finalizados = 0
             volverBase = True
             
-
-        actualizarMovimientos(listaDronMov, m.value)
             
         productor(listaDronMov)
 
@@ -341,6 +343,61 @@ def stringMapa(listaMapa):
 
 ### Funciones que manejan el fichero de drones y el mapa ###
 
+
+#----------------------------------------------------#
+
+### Funciones para el manejo de pygame ###
+
+
+# Función para dibujar el mapa de bits
+def draw_grid(screen):
+    for x in range(0, WINDOW_SIZE[0], GRID_SIZE):
+        pygame.draw.line(screen, (255, 255, 255), (x, 0), (x, WINDOW_SIZE[1]))
+    for y in range(0, WINDOW_SIZE[1], GRID_SIZE):
+        pygame.draw.line(screen, (255, 255, 255), (0, y), (WINDOW_SIZE[0], y))
+
+
+def pygameMapa(listaMapa):
+
+    # Crea la ventana de juego
+    screen = pygame.display.set_mode(WINDOW_SIZE)
+    pygame.display.set_caption("Mapa impreso desde el AD_Engine")
+
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            pygame.quit()
+            sys.exit()
+
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            pygame.quit()
+            sys.exit()
+
+    screen.fill((0, 0, 0))
+    draw_grid(screen)
+
+
+    
+    #listaMapa tiene el siguiente formato: [[(color, id), (color, id), ...], [(color, id), (color, id), ...], ...
+    for y, fila in enumerate(listaMapa):
+        for x, elemento in enumerate(fila):
+            color = elemento[0]
+
+            if color == 'G':
+                drone_color = (0, 255, 0)  # Verde
+                drone_rect = pygame.Rect(x * GRID_SIZE, y * GRID_SIZE, DRONE_SIZE, DRONE_SIZE)
+                pygame.draw.rect(screen, drone_color, drone_rect)
+            elif color == 'R':
+                drone_color = (255, 0, 0)  # Rojo
+                drone_rect = pygame.Rect(x * GRID_SIZE, y * GRID_SIZE, DRONE_SIZE, DRONE_SIZE)
+                pygame.draw.rect(screen, drone_color, drone_rect)
+
+    pygame.display.update()
+
+
+### Funciones para el manejo de pygame ###
+
+
 #----------------------------------------------------------#
 
 #usaremos 6 argumentos, la BBDD no necesita de conexion
@@ -365,6 +422,20 @@ if  (len(sys.argv) == 7):
     IP_WEATHER = sys.argv[5]
     PORT_WEATHER = int(sys.argv[6])
     ADDR_WEATHER = (IP_WEATHER, PORT_WEATHER)
+
+    ############################ PYGAME ############################
+
+    # export LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libstdc++.so.6
+
+    # Inicializa Pygame
+    pygame.init()
+
+    # Definir constantes
+    WINDOW_SIZE = (400, 400)
+    GRID_SIZE = 20
+    DRONE_SIZE = 20
+
+    ################################################################
 
     print("Bienvenido al AD_Engine")
     programaActiveBool = True
@@ -406,7 +477,7 @@ if  (len(sys.argv) == 7):
                             if(opcionFiguraSelec == "1"):
                                 os.system("clear")
                                 print("Mostrando figura final")
-                                print(stringMapa(crearMapa(listaMapa)))
+                                pygameMapa(crearMapa(listaMapa))
                                 # mostrar figura final
                             elif(opcionFiguraSelec == "2"):
                                 os.system("clear")
