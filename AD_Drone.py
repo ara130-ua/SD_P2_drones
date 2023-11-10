@@ -10,7 +10,6 @@ import signal
 
 
 HEADER = 64
-PORT = 5050 # hay que quitarlo y se quedará como argumento
 FORMAT = 'utf-8'
 
 #----------------------------------------------------#
@@ -328,8 +327,9 @@ def receive(client):
 # ip y puerto del engine
 # ip y puerto kafka
 # ip y puerto de registry
+# puerto de escucha del dron
 # alias del dron
-if (len(sys.argv) == 8):
+if (len(sys.argv) == 9):
 
     IP_ENGINE = sys.argv[1] 
     PUERTO_ENGINE = sys.argv[2]
@@ -341,7 +341,8 @@ if (len(sys.argv) == 8):
     IP_REGISTRY = sys.argv[5]
     PUERTO_REGISTRY = sys.argv[6]
 
-    ALIAS_DRON = sys.argv[7]
+    PORT = sys.argv[7]
+    ALIAS_DRON = sys.argv[8]
 
     pos_actual = (0,0)
     pos_final = (int,int)
@@ -409,5 +410,5 @@ if (len(sys.argv) == 8):
             engineOnline = False
     
 else:
-    print("No se ha podido conectar al servidor de registro, los argumentos son <IP_Engine> <Puerto_Engine> <IP_Kafka> <Puerto_Kafka> <IP_Registry> <Puerto_Registry> <Alias_Dron>")
+    print("No se ha podido conectar al servidor de registro, los argumentos son <IP_Engine> <Puerto_Engine> <IP_Kafka> <Puerto_Kafka> <IP_Registry> <Puerto_Registry> <Puerto_escucha> <Alias_Dron>")
         
