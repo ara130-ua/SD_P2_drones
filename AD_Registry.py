@@ -4,7 +4,7 @@ import sys
 import sqlite3
 
 HEADER = 64
-SERVER = "localhost" #socket.gethostbyname(socket.gethostname())
+SERVER = "172.20.10.9" #socket.gethostbyname(socket.gethostname())
 FORMAT = 'utf-8'
 
 def create_Dron(alias):
