@@ -51,7 +51,10 @@ def consumidor(listaDronMov, num_drones):
             print("Dron " + str(m.value[1]) + " finalizado")
 
         if(finalizados == num_drones):
-            productor(listaDronMov)
+            for dron in m.value:
+                dron[0] = 'G'
+            productor(actualizarMovimientos(listaDronMov,m.value))
+            time.sleep(5)
             productor("FIGURA COMPLETADA")
             finalizados = 0
             volverBase = True
