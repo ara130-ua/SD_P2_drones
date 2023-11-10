@@ -6,7 +6,7 @@ import time
 bbddRemove = "gnome-terminal -- bash -c 'rm bd1.db; exec bash '"
 bbdd = "gnome-terminal -- bash -c 'python BBDD.py; exec bash '"
 kafka = "gnome-terminal -- bash -c 'python launcher_kafka.py; exec bash '"
-engine = "gnome-terminal -- bash -c 'python AD_Engine.py 8050 8 localhost 9092 localhost 7050 ; exec bash '"
+engine = "gnome-terminal -- bash -c 'python AD_Engine.py 8050 8 192.168.56.101 9092 192.168.56.101 7050 ; exec bash '"
 registry = "gnome-terminal -- bash -c 'python AD_Registry.py 6050; exec bash '"
 weather = "gnome-terminal -- bash -c 'python AD_Wheather.py 7050; exec bash '"
 

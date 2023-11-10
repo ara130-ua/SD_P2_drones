@@ -14,7 +14,7 @@ import pygame
 
 HEADER = 64
 FORMAT = 'utf-8'
-SERVER = "localhost" #socket.gethostbyname(socket.gethostname())
+SERVER = "192.168.108.179" #socket.gethostbyname(socket.gethostname())
 
 #----------------------------------------------------------#
 
