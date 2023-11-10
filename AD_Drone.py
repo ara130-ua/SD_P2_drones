@@ -258,12 +258,15 @@ def dronRegistry(ip_reg, puerto_reg, alias):
     ADDR = (str(ip_reg), int(puerto_reg))
 
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    client.connect(ADDR)
-    print(f"Se ha establecido conexión en [{ADDR}]")
-    send(alias, client)
-    message = receive(client)
-    id, token = message.split(",")
-    return id, token
+    try:
+        client.connect(ADDR)
+        print(f"Se ha establecido conexión en [{ADDR}]")
+        send(alias, client)
+        message = receive(client)
+        id, token = message.split(",")
+        return id, token
+    except Exception as exc:
+        return None, None
 
 # conexión con el módulo AD_Engine para darse de alta en el espectaculo
 def dronEngine(ip_eng, puerto_eng, id, token):
@@ -367,48 +370,52 @@ if (len(sys.argv) == 9):
 
     #Argumentos dronRegistry( IP_Registry, Puerto_Registry, Alias_Dron )
     id, token = dronRegistry(IP_REGISTRY, PUERTO_REGISTRY, ALIAS_DRON)
-    print( "id: ", id, " token: ", token)
+    if id:
+
+        print( "id: ", id, " token: ", token)
+        
+        # conexion con el módulo AD_Engine para darse de alta en el espectaculo
+        #Argumentos dronEngine( IP_Engine, Puerto_Engine, ID, Token)
     
-    # conexion con el módulo AD_Engine para darse de alta en el espectaculo
-    #Argumentos dronEngine( IP_Engine, Puerto_Engine, ID, Token)
-
-    engineOnline = True
-    while engineOnline:
-        if(dronEngine(IP_ENGINE, PUERTO_ENGINE, id, token)):
-            # conexion con el módulo AD_Kafka para recibir las ordenes
-            #Argumentos consumidor( IP_Kafka, Puerto_Kafka, ID )
-            try:
-                engineOnline = consumidor_mapas(id, pos_actual, pos_final)
-
-                if(engineOnline == False):
+        engineOnline = True
+        while engineOnline:
+            if(dronEngine(IP_ENGINE, PUERTO_ENGINE, id, token)):
+                # conexion con el módulo AD_Kafka para recibir las ordenes
+                #Argumentos consumidor( IP_Kafka, Puerto_Kafka, ID )
+                try:
+                    engineOnline = consumidor_mapas(id, pos_actual, pos_final)
+    
+                    if(engineOnline == False):
+                        print("Se ha cerrado la conexión inesperadamente con el engine" + str(exc))
+                    engineOnline = False
+                    print("Vuelvo a casa")
+                    while(pos_actual != (1,1)):
+                        pos_actual = run(pos_actual, (1,1))
+                        print("Posicion actualizada -->" + str(pos_actual))
+                        time.sleep(1)
+    
+                except Exception as exc:
                     print("Se ha cerrado la conexión inesperadamente con el engine" + str(exc))
-                engineOnline = False
-                print("Vuelvo a casa")
-                while(pos_actual != (1,1)):
-                    pos_actual = run(pos_actual, (1,1))
-                    print("Posicion actualizada -->" + str(pos_actual))
-                    time.sleep(1)
-
-            except Exception as exc:
-                print("Se ha cerrado la conexión inesperadamente con el engine" + str(exc))
-                engineOnline = False
-                print("Vuelvo a casa")
-                while(pos_actual != (1,1)):
-                    pos_actual = run(pos_actual, (1,1))
-                    print("Posicion actualizada -->" + str(pos_actual))
-                    time.sleep(1)
-            print("Quieres volver a participar en otra figura? (S/N)")
-            respuesta = input()
-            if(respuesta == "S" or respuesta == "s"):
-                engineOnline = True
-                pos_actual = (0,0)
-                pos_final = (int,int)
+                    engineOnline = False
+                    print("Vuelvo a casa")
+                    while(pos_actual != (1,1)):
+                        pos_actual = run(pos_actual, (1,1))
+                        print("Posicion actualizada -->" + str(pos_actual))
+                        time.sleep(1)
+                print("Quieres volver a participar en otra figura? (S/N)")
+                respuesta = input()
+                if(respuesta == "S" or respuesta == "s"):
+                    engineOnline = True
+                    pos_actual = (0,0)
+                    pos_final = (int,int)
+                else:
+                    engineOnline = False
             else:
+                print("No se ha podido entrar al espectaculo")
                 engineOnline = False
-        else:
-            print("No se ha podido entrar al espectaculo")
-            engineOnline = False
-    
+    else:
+        print("No se ha podido registrar el dron")
+        
 else:
     print("No se ha podido conectar al servidor de registro, los argumentos son <IP_Engine> <Puerto_Engine> <IP_Kafka> <Puerto_Kafka> <IP_Registry> <Puerto_Registry> <Puerto_escucha> <Alias_Dron>")
         
