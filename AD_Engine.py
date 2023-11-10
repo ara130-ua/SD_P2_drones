@@ -198,8 +198,6 @@ def conexionClima(ipClima, puertoClima):
         print("No se ha encontrado conexión")
 
 
-
-
 def manejoClima(conn, addr):
     conectado = True
     while conectado:

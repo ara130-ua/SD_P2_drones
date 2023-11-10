@@ -5,8 +5,8 @@ from kafka import KafkaConsumer
 from json import loads
 from json import dumps
 import time
-import random
 import pygame
+import signal
 
 
 HEADER = 64
@@ -14,6 +14,9 @@ PORT = 5050 # hay que quitarlo y se quedará como argumento
 FORMAT = 'utf-8'
 
 #----------------------------------------------------#
+
+def handle_alarm(signum, frame):
+    raise TimeoutError()
 
 ### Funciones para el manejo de kafka ###
 
@@ -37,8 +40,26 @@ def consumidor_mapas(id_dron, pos_actual, pos_final):
     #Comprobar en la segunda figura
     primerConsumidorBool = True
     figuraCompleta = False
+
+    signal.signal(signal.SIGALRM, handle_alarm)
     
     for m in consumer:
+
+        #aqui deberia ir un timeout para que si no recibe nada en un tiempo, vuelva a casa
+        try:
+        # Start the timer
+            signal.alarm(30)
+
+        # Your normal operations here
+
+        except TimeoutError:
+            return False
+
+        finally:
+            # Cancel the timer if the operation finished before the timeout
+            signal.alarm(0)
+
+            
 
         print("Recibido mapa: " + str(m.value))
         if((pos_actual[0], pos_actual[1]) == (pos_final[0], pos_final[1]) and figuraCompleta == True):
@@ -53,7 +74,7 @@ def consumidor_mapas(id_dron, pos_actual, pos_final):
             productor(listaDronMov)
             continue
 
-        if(primerConsumidorBool == False and (pos_actual[0], pos_actual[1]) == (pos_final[0], pos_final[1]) ):
+        if(primerConsumidorBool == False and (pos_actual[0], pos_actual[1]) == (pos_final[0], pos_final[1]) and listaDronMov[0] != 'G'):
             listaDronMov[0] = 'G'
             productor(listaDronMov)
             #print(stringMapa(crearMapa(m.value)))
