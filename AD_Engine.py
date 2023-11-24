@@ -14,7 +14,7 @@ import pygame
 
 HEADER = 64
 FORMAT = 'utf-8'
-SERVER = "172.20.10.9" #socket.gethostbyname(socket.gethostname())
+SERVER = "localhost" #socket.gethostbyname(socket.gethostname())
 
 #----------------------------------------------------------#
 
@@ -51,10 +51,7 @@ def consumidor(listaDronMov, num_drones):
             print("Dron " + str(m.value[1]) + " finalizado")
 
         if(finalizados == num_drones):
-            for dron in m.value:
-                dron[0] = 'G'
-            productor(actualizarMovimientos(listaDronMov,m.value))
-            time.sleep(5)
+            productor(listaDronMov)
             productor("FIGURA COMPLETADA")
             finalizados = 0
             volverBase = True
@@ -67,7 +64,7 @@ def consumidor(listaDronMov, num_drones):
             for dron in listaDronMov:
                 if(dron[2] == (1,1)):
                     enBase = enBase + 1
-            if(enBase == 8):
+            if(enBase == num_drones):
                 return True
 
 def espectaculo(listaMapa, numMaxDrones):

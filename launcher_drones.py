@@ -1,13 +1,13 @@
 import subprocess
 import time
 
-IP_ENGINE = "172.20.10.9"
+IP_ENGINE = "localhost"
 PUERTO_ENGINE = 8050
 
-IP_KAFKA = "172.20.10.2"
+IP_KAFKA = "localhost"
 PUERTO_KAFKA = 9092
 
-IP_REGISTRY = "172.20.10.9"
+IP_REGISTRY = "localhost"
 PUERTO_REGISTRY = 6050
 
 PUERTO_DRON = 5050
