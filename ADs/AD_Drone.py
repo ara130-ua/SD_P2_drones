@@ -44,22 +44,6 @@ def consumidor_mapas(id_dron, pos_actual, pos_final):
     
     for m in consumer:
 
-        #aqui deberia ir un timeout para que si no recibe nada en un tiempo, vuelva a casa
-        try:
-        # Start the timer
-            signal.alarm(30)
-
-        # Your normal operations here
-
-        except TimeoutError:
-            return False
-
-        finally:
-            # Cancel the timer if the operation finished before the timeout
-            signal.alarm(0)
-
-            
-
         print("Recibido mapa: " + str(m.value))
         if((pos_actual[0], pos_actual[1]) == (pos_final[0], pos_final[1]) and figuraCompleta == True):
             return True
