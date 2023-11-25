@@ -56,7 +56,7 @@ def consumidor(listaDronMov, num_drones):
             finalizados = 0
             volverBase = True
             
-            
+        pygameMapa(crearMapa(listaDronMov))
         productor(listaDronMov)
 
         if(volverBase==True):
