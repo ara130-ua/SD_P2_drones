@@ -59,9 +59,11 @@ def consumidor_mapas(id_dron, pos_actual, pos_final):
 
         if(primerConsumidorBool == False and (pos_actual[0], pos_actual[1]) == (pos_final[0], pos_final[1]) and listaDronMov[0] != 'G'):
             listaDronMov[0] = 'G'
+            print("El dron con id: " + str(id_dron) + " ha llegado a su destino")
             productor(listaDronMov)
             #print(stringMapa(crearMapa(m.value)))
             pygameMapa(crearMapa(m.value))
+
 
         elif(primerConsumidorBool == False and isMapaActualizado(m.value, pos_actual, id_dron) and (pos_actual[0], pos_actual[1]) != (pos_final[0], pos_final[1])):
             # crear y pintar el mapa
@@ -84,6 +86,8 @@ def consumidor_mapas(id_dron, pos_actual, pos_final):
         else:
             #print(stringMapa(crearMapa(m.value)))
             pygameMapa(crearMapa(m.value))
+
+        print(listaDronMov)
             
             
 #manda los movimientos al topic de los moviemtos
@@ -374,6 +378,7 @@ if (len(sys.argv) == 9):
                     engineOnline = False
                     print("Vuelvo a casa")
                     while(pos_actual != (1,1)):
+                        
                         pos_actual = run(pos_actual, (1,1))
                         print("Posicion actualizada -->" + str(pos_actual))
                         time.sleep(1)

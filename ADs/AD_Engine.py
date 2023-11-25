@@ -47,8 +47,10 @@ def consumidor(listaDronMov, num_drones):
         actualizarMovimientos(listaDronMov, m.value)
 
         if(m.value[0] == 'G'):
+            actualizarMovimientos(listaDronMov, m.value, True)
             finalizados = finalizados + 1
             print("Dron " + str(m.value[1]) + " finalizado")
+            print(listaDronMov)
 
         if(finalizados == num_drones):
             productor(listaDronMov)
@@ -302,9 +304,14 @@ def manejoFichero():
             
     return(lista_inicial)
 
-def actualizarMovimientos(listaDronMov, dronMov):
+def actualizarMovimientos(listaDronMov, dronMov, isFinalizado=False):
     for dron in listaDronMov:
         if(dron[1] == int(dronMov[1])):
+            if(isFinalizado ):
+                dron[0] = 'G'
+            else:
+                dron[0] = 'R'
+
             dron[2] = (dronMov[2][0], dronMov[2][1])
             return listaDronMov
         

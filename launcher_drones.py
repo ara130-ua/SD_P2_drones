@@ -16,6 +16,6 @@ ALIAS_DRON = ["Alfa", "Bravo", "Charlie", "Delta"]
 
 
 for dron in ALIAS_DRON:
-    comando_dron = "gnome-terminal -- bash -c 'python3 AD_Drone.py " +IP_ENGINE+ " " +str(PUERTO_ENGINE)+ " " +IP_KAFKA+ " " +str(PUERTO_KAFKA)+ " " +IP_REGISTRY+ " " +str(PUERTO_REGISTRY)+ " " +str(PUERTO_DRON)+ " " +dron + "; exec bash '"
+    comando_dron = "gnome-terminal -- bash -c 'python3 ADs/AD_Drone.py " +IP_ENGINE+ " " +str(PUERTO_ENGINE)+ " " +IP_KAFKA+ " " +str(PUERTO_KAFKA)+ " " +IP_REGISTRY+ " " +str(PUERTO_REGISTRY)+ " " +str(PUERTO_DRON)+ " " +dron + "; exec bash '"
     subprocess.run(comando_dron, shell=True)
     time.sleep(1)
