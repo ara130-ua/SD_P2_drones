@@ -44,6 +44,8 @@ def consumidor(listaDronMov, num_drones):
 
     for m in consumer:
         
+        if(setPosEstDrones(m.value[1], m.value[0], m.value[2][0], m.value[2][1])):
+            print("Posicion y estado del dron " + str(m.value[1]) + " actualizados correctamente")
         actualizarMovimientos(listaDronMov, m.value)
 
         if(m.value[0] == 'G'):
@@ -53,12 +55,16 @@ def consumidor(listaDronMov, num_drones):
             print(listaDronMov)
 
         if(finalizados == num_drones):
+            print(getPosEstDrones()) # si tiene el mismo formato que listaDronMov descomentar abajo
+            # productor(getPosEstDrones())
             productor(listaDronMov)
             productor("FIGURA COMPLETADA")
             finalizados = 0
             volverBase = True
             
         pygameMapa(crearMapa(listaDronMov))
+        print(getPosEstDrones()) # si tiene el mismo formato que listaDronMov descomentar abajo
+        # productor(getPosEstDrones())
         productor(listaDronMov)
 
         if(volverBase==True):
@@ -180,6 +186,38 @@ def leerTokenDron(id):
         return None
     # devolvemos el token
     return token
+
+def getPosEstDrones():
+    # nos conectamos a la BBDD
+    conexion = sqlite3.connect("bd1.db")
+    try:
+        cursor = conexion.cursor()
+        cursor.execute("select estado, id, coordenadaX, coordenadaY from drones")
+        infoDrones = cursor.fetchall()
+        conexion.close()
+    except:
+        print("Error al leer la posición y el estado de los drones")
+        conexion.close()
+        return None
+    
+    # devolvemos la información de los drones
+    return infoDrones
+
+def setPosEstDrones(id, estado, coordenadaX, coordenadaY):
+    # nos conectamos a la BBDD
+    conexion = sqlite3.connect("bd1.db")
+    try:
+        cursor = conexion.cursor()
+        cursor.execute("update drones set estado='"+estado+"', coordenadaX="+str(coordenadaX)+", coordenadaY="+str(coordenadaY)+" where id="+str(id))
+        conexion.commit()
+        conexion.close()
+    except:
+        print("Error al actualizar la posición y el estado de los drones")
+        conexion.close()
+        return False
+    
+    # devolvemos la información de los drones
+    return True
 
 ### Funciones de BBDD ###
 
