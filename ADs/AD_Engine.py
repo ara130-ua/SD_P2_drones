@@ -55,7 +55,7 @@ def consumidor(listaDronMov, num_drones):
             print(listaDronMov)
 
         if(finalizados == num_drones):
-            print(getPosEstDrones()) # si tiene el mismo formato que listaDronMov descomentar abajo
+            #print(getPosEstDrones()) # si tiene el mismo formato que listaDronMov descomentar abajo
             # productor(getPosEstDrones())
             productor(listaDronMov)
             productor("FIGURA COMPLETADA")
@@ -63,7 +63,7 @@ def consumidor(listaDronMov, num_drones):
             volverBase = True
             
         pygameMapa(crearMapa(listaDronMov))
-        print(getPosEstDrones()) # si tiene el mismo formato que listaDronMov descomentar abajo
+        #print(getPosEstDrones()) # si tiene el mismo formato que listaDronMov descomentar abajo
         # productor(getPosEstDrones())
         productor(listaDronMov)
 
@@ -370,11 +370,12 @@ def crearMapa(listaDronMovActuales):
 
     return(listaMapa)
 
-# dronMov = [(ID,(X,Y))]
+# dronMov = ['R',ID,(X,Y)]
 def actualizaMapa(listaMapa, dronMov):
-    estado = 'G'
-    Id = dronMov[0]
-    movimiento = (int(dronMov[1][0])-1, int(dronMov[1][1])-1)
+    estado = dronMov[0]
+    Id = dronMov[1]
+    movimiento = (int(dronMov[2][0])-1, int(dronMov[2][1])-1)
+    # metemos el estado y el id en la posicion del mapa
     listaMapa[movimiento[0]][movimiento[1]] = (estado, Id)
     return listaMapa
        
