@@ -46,30 +46,30 @@ def consumidor(listaDronMov, num_drones):
         
         if(setPosEstDrones(m.value[1], m.value[0], m.value[2][0], m.value[2][1])):
             print("Posicion y estado del dron " + str(m.value[1]) + " actualizados correctamente")
-        actualizarMovimientos(listaDronMov, m.value)
+        actualizarMovimientos(listaDronMov, m.value) # podemos eliminarlo
 
         if(m.value[0] == 'G'):
-            actualizarMovimientos(listaDronMov, m.value, True)
+            actualizarMovimientos(listaDronMov, m.value, True) # podemos eliminarlo
             finalizados = finalizados + 1
             print("Dron " + str(m.value[1]) + " finalizado")
             print(listaDronMov)
 
         if(finalizados == num_drones):
             #print(getPosEstDrones()) # si tiene el mismo formato que listaDronMov descomentar abajo
-            # productor(getPosEstDrones())
-            productor(listaDronMov)
+            productor(getPosEstDrones())
+            #productor(listaDronMov) # podemos eliminarlo
             productor("FIGURA COMPLETADA")
             finalizados = 0
             volverBase = True
             
         pygameMapa(crearMapa(listaDronMov))
         #print(getPosEstDrones()) # si tiene el mismo formato que listaDronMov descomentar abajo
-        # productor(getPosEstDrones())
-        productor(listaDronMov)
+        productor(getPosEstDrones())
+        #productor(listaDronMov)# podemos eliminarlo
 
         if(volverBase==True):
             enBase = 0
-            for dron in listaDronMov:
+            for dron in listaDronMov: # cambiar por getPosEstDrones()
                 if(dron[2] == (1,1)):
                     enBase = enBase + 1
             if(enBase == num_drones):
@@ -184,8 +184,21 @@ def leerTokenDron(id):
         print("Error al leer el token del dron")
         conexion.close()
         return None
-    # devolvemos el token
+    # inicializamos las posiciones y el estado del dron y devolvemos el token
+    setPosInicialDron(id)
     return token
+
+def setPosInicialDron(id):
+    # nos conectamos a la BBDD
+    conexion = sqlite3.connect("bd1.db")
+    try:
+        cursor = conexion.cursor()
+        cursor.execute("update drones set estado='R', coordenadaX=1, coordenadaY=1 where id="+str(id))
+        conexion.commit()
+        conexion.close()
+    except:
+        print("Error al inicializar la posición y el estado del dron")
+        conexion.close()
 
 def getPosEstDrones():
     # nos conectamos a la BBDD
@@ -201,7 +214,10 @@ def getPosEstDrones():
         return None
     
     # devolvemos la información de los drones
-    return infoDrones
+    listaDrones = []
+    for dron in infoDrones:
+        listaDrones.append([dron[0], dron[1], (dron[2], dron[3])])
+    return listaDrones
 
 def setPosEstDrones(id, estado, coordenadaX, coordenadaY):
     # nos conectamos a la BBDD
