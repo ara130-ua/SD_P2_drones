@@ -81,8 +81,8 @@ def espectaculo(listaMapa, numMaxDrones):
         if(consumidor(listaDronMovInicial, len(listaMapa))):
             print("Figura finalizada")
 
-        delete_topic1 = "gnome-terminal -- bash -c '/home/joanclq/kafka/bin/kafka-topics.sh --delete --topic mapas1-topic --bootstrap-server " + ADDR_BROKER + "; exec bash'"
-        delete_topic2 = "gnome-terminal -- bash -c '/home/joanclq/kafka/bin/kafka-topics.sh --delete --topic movimientos1-topic --bootstrap-server " + ADDR_BROKER + "; exec bash'"
+        delete_topic1 = "gnome-terminal -- bash -c '/home/joanclq/kafka/bin/kafka-topics.sh --delete --topic mapas1-topic --bootstrap-server" + ADDR_BROKER + " && exit; exec bash'"
+        delete_topic2 = "gnome-terminal -- bash -c '/home/joanclq/kafka/bin/kafka-topics.sh --delete --topic movimientos1-topic --bootstrap-server " + ADDR_BROKER + " && exit; exec bash'"
         subprocess.run(delete_topic2, shell=True) 
         subprocess.run(delete_topic1, shell=True)
         # si hace algo raro time.sleep(5)
@@ -336,7 +336,7 @@ def crearMapa(listaDronMovActuales):
 def actualizaMapa(listaMapa, dronMov):
     estado = 'G'
     Id = dronMov[0]
-    movimiento = (int(dronMov[1][0])-1, int(dronMov[1][1])-1)
+    movimiento = (int(dronMov[2][0])-1, int(dronMov[2][1])-1)
     listaMapa[movimiento[0]][movimiento[1]] = (estado, Id)
     return listaMapa
        
