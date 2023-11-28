@@ -55,17 +55,13 @@ def consumidor(listaDronMov, num_drones):
             print(listaDronMov)
 
         if(finalizados == num_drones):
-            #print(getPosEstDrones()) # si tiene el mismo formato que listaDronMov descomentar abajo
             productor(getPosEstDrones())
-            #productor(listaDronMov) # podemos eliminarlo
             productor("FIGURA COMPLETADA")
             finalizados = 0
             volverBase = True
             
         pygameMapa(crearMapa(listaDronMov))
-        #print(getPosEstDrones()) # si tiene el mismo formato que listaDronMov descomentar abajo
         productor(getPosEstDrones())
-        #productor(listaDronMov)# podemos eliminarlo
 
         if(volverBase==True):
             enBase = 0
