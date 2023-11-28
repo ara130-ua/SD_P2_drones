@@ -1,5 +1,4 @@
 bd1.db
-prueba_texto.py
-launcher_kafka.py
 launcher_drones.py
 launcher_programs.py
+launcher_kafka.py

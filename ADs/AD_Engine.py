@@ -44,26 +44,28 @@ def consumidor(listaDronMov, num_drones):
 
     for m in consumer:
         
-        actualizarMovimientos(listaDronMov, m.value)
+        if(setPosEstDrones(m.value[1], m.value[0], m.value[2][0], m.value[2][1])):
+            print("Posicion y estado del dron " + str(m.value[1]) + " actualizados correctamente")
+        actualizarMovimientos(listaDronMov, m.value) # podemos eliminarlo
 
         if(m.value[0] == 'G'):
-            actualizarMovimientos(listaDronMov, m.value, True)
+            actualizarMovimientos(listaDronMov, m.value, True) # podemos eliminarlo
             finalizados = finalizados + 1
             print("Dron " + str(m.value[1]) + " finalizado")
             print(listaDronMov)
 
         if(finalizados == num_drones):
-            productor(listaDronMov)
+            productor(getPosEstDrones())
             productor("FIGURA COMPLETADA")
             finalizados = 0
             volverBase = True
             
         pygameMapa(crearMapa(listaDronMov))
-        productor(listaDronMov)
+        productor(getPosEstDrones())
 
         if(volverBase==True):
             enBase = 0
-            for dron in listaDronMov:
+            for dron in listaDronMov: # cambiar por getPosEstDrones()
                 if(dron[2] == (1,1)):
                     enBase = enBase + 1
             if(enBase == num_drones):
@@ -178,8 +180,56 @@ def leerTokenDron(id):
         print("Error al leer el token del dron")
         conexion.close()
         return None
-    # devolvemos el token
+    # inicializamos las posiciones y el estado del dron y devolvemos el token
+    setPosInicialDron(id)
     return token
+
+def setPosInicialDron(id):
+    # nos conectamos a la BBDD
+    conexion = sqlite3.connect("bd1.db")
+    try:
+        cursor = conexion.cursor()
+        cursor.execute("update drones set estado='R', coordenadaX=1, coordenadaY=1 where id="+str(id))
+        conexion.commit()
+        conexion.close()
+    except:
+        print("Error al inicializar la posición y el estado del dron")
+        conexion.close()
+
+def getPosEstDrones():
+    # nos conectamos a la BBDD
+    conexion = sqlite3.connect("bd1.db")
+    try:
+        cursor = conexion.cursor()
+        cursor.execute("select estado, id, coordenadaX, coordenadaY from drones")
+        infoDrones = cursor.fetchall()
+        conexion.close()
+    except:
+        print("Error al leer la posición y el estado de los drones")
+        conexion.close()
+        return None
+    
+    # devolvemos la información de los drones
+    listaDrones = []
+    for dron in infoDrones:
+        listaDrones.append([dron[0], dron[1], (dron[2], dron[3])])
+    return listaDrones
+
+def setPosEstDrones(id, estado, coordenadaX, coordenadaY):
+    # nos conectamos a la BBDD
+    conexion = sqlite3.connect("bd1.db")
+    try:
+        cursor = conexion.cursor()
+        cursor.execute("update drones set estado='"+estado+"', coordenadaX="+str(coordenadaX)+", coordenadaY="+str(coordenadaY)+" where id="+str(id))
+        conexion.commit()
+        conexion.close()
+    except:
+        print("Error al actualizar la posición y el estado de los drones")
+        conexion.close()
+        return False
+    
+    # devolvemos la información de los drones
+    return True
 
 ### Funciones de BBDD ###
 
@@ -332,11 +382,12 @@ def crearMapa(listaDronMovActuales):
 
     return(listaMapa)
 
-# dronMov = [(ID,(X,Y))]
+# dronMov = ['R',ID,(X,Y)]
 def actualizaMapa(listaMapa, dronMov):
-    estado = 'G'
-    Id = dronMov[0]
-    movimiento = (int(dronMov[1][0])-1, int(dronMov[1][1])-1)
+    estado = dronMov[0]
+    Id = dronMov[1]
+    movimiento = (int(dronMov[2][0])-1, int(dronMov[2][1])-1)
+    # metemos el estado y el id en la posicion del mapa
     listaMapa[movimiento[0]][movimiento[1]] = (estado, Id)
     return listaMapa
        
