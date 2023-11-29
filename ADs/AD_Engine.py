@@ -11,6 +11,7 @@ from json import dumps
 from json import loads
 from kafka import KafkaConsumer
 import pygame
+import requests
 
 HEADER = 64
 FORMAT = 'utf-8'
@@ -274,6 +275,21 @@ def manejoClima(conn, addr):
     print(f"Se ha cerrado la conexión con el AD_Weather {addr}")
 
 ### Funciones que manejan la conexion con el AD_Wheather ###
+
+#----------------------------------------------------------#
+
+### Nueva funcion con OpenWeather ###
+
+def openwether(lat, lon):
+    url = 'https://api.openweathermap.org/data/2.5/weather?lat='+str(lat)+'&lon='+str(lon)+'&appid=ab5fabb14bb7f9339114ee722d636a74'
+    r = requests.get(url)
+    j = r.json()
+    temp = j['main']['temp']
+    temp = temp - 273.15
+    name = j['name']
+    return temp, name
+
+### Nueva funcion con OpenWeather ###
 
 #----------------------------------------------------------#
 
