@@ -50,6 +50,8 @@ def manejo_dron(conn, addr):
             respuesta = str(id)+","+str(token)
             send(respuesta, conn)
 
+            # hacemos un timeout de 20 seg y comprobamos que el token del dron se ha borrado de la BBDD
+
 def send(msg, server):
     message = msg.encode(FORMAT)
     msg_length = len(message)
@@ -86,6 +88,3 @@ if(len(sys.argv) == 2):
     registro_dron()
 else:
     print("AD_Registry necesita estos argumentos <Puerto de escucha>")
-
-
-#127.0.0.1
