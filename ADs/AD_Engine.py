@@ -232,6 +232,37 @@ def setPosEstDrones(id, estado, coordenadaX, coordenadaY):
     # devolvemos la información de los drones
     return True
 
+def setEstAutenticadoDron(id, estado):
+    
+    if(estado):
+        estAux = "true"
+    else:
+        estAux = "false"    
+    # nos conectamos a la BBDD
+    conexion = sqlite3.connect("bd1.db")
+    try:
+        cursor = conexion.cursor()
+        cursor.execute("update drones set estado='"+estAux+"' where id="+str(id))
+        conexion.commit()
+        conexion.close()
+    except:
+        print("Error al actualizar el estado de autenticado del dron")
+        conexion.close()
+
+
+def deleteTokenDron(id):
+    # nos conectamos a la BBDD
+    conexion = sqlite3.connect("bd1.db")
+    try:
+        cursor = conexion.cursor()
+        cursor.execute("update drones set token=null where id="+str(id))
+        conexion.commit()
+        conexion.close()
+        print(f"Token del dron {id} borrado")
+    except:
+        print("Error al borrar el token del dron")
+        conexion.close()
+        
 ### Funciones de BBDD ###
 
 #----------------------------------------------------------#
@@ -306,10 +337,14 @@ def manejoTokenDrones(conn, addr):
         if(str(leerTokenDron(id)) == token):
             send("OK", conn)
             print("Token correcto")
+            # funcion para actualizar el estado del dron a autenticado y eliminar el token dado por registry
+            setEstAutenticadoDron(id, True)
+            deleteTokenDron(id)
             return True
         else:
             send("KO", conn)
             print("Token incorrecto")
+            setEstAutenticadoDron(id, False)
             return False
 
                 
