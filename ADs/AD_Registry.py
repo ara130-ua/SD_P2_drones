@@ -1,5 +1,6 @@
 import socket
 import threading
+import time
 import sys
 import sqlite3
 
@@ -29,6 +30,36 @@ def create_Dron(alias):
         conexion.close()
 
         return "Error", "Base de datos"
+    
+### Funciones de la BBDD ###
+    
+def deleteTokenDron(id):
+    # nos conectamos a la BBDD
+    conexion = sqlite3.connect("bd1.db")
+    try:
+        cursor = conexion.cursor()
+        cursor.execute("update drones set token=null where id="+str(id))
+        conexion.commit()
+        conexion.close()
+    except:
+        print("Error al borrar el token del dron")
+        conexion.close()
+        
+def getTokenDron(id):
+    # nos conectamos a la BBDD
+    conexion = sqlite3.connect("bd1.db")
+    try:
+        cursor = conexion.cursor()
+        cursor.execute("select token from drones where id="+str(id))
+        token = cursor.fetchone()[0]
+        conexion.close()
+        return token
+    except:
+        print("Error al obtener el token del dron")
+        conexion.close()
+        return "Error"
+        
+### Funciones de la BBDD ###
 
 def manejo_dron(conn, addr):
     print(f"Se ha conectado el dron {addr}")
@@ -49,6 +80,15 @@ def manejo_dron(conn, addr):
             id, token = create_Dron(alias)
             respuesta = str(id)+","+str(token)
             send(respuesta, conn)
+
+            # hacemos un timeout de 20 seg y comprobamos que el token del dron se ha borrado de la BBDD
+            dronAutenticado = False
+            while(not(dronAutenticado)):
+                time.sleep(20)
+                if(getTokenDron(id) != None):
+                    print(f"El dron {alias} no se ha autenticado")
+                    deleteTokenDron(id)
+                    
 
 def send(msg, server):
     message = msg.encode(FORMAT)
@@ -86,6 +126,3 @@ if(len(sys.argv) == 2):
     registro_dron()
 else:
     print("AD_Registry necesita estos argumentos <Puerto de escucha>")
-
-
-#127.0.0.1

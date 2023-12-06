@@ -4,7 +4,7 @@ conexion = sqlite3.connect("bd1.db")
 
 try:
     #tabla drones
-    conexion.execute("create table drones (id integer primary key autoincrement, alias text, token integer, estado text, coordenadaX integer, coordenadaY integer)")
+    conexion.execute("create table drones (id integer primary key autoincrement, alias text, token integer, estado text, coordenadaX integer, coordenadaY integer, autenticado bool)")
 
     print("se creo la tabla drones")
 #si la tabla ya existe, no la crea
