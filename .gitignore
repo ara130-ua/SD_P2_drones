@@ -2,3 +2,4 @@ bd1.db
 launcher_drones.py
 launcher_programs.py
 launcher_kafka.py
+pruebaOpenwether.py
