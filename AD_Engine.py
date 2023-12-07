@@ -471,10 +471,6 @@ def draw_grid(screen):
 
 def pygameMapa(listaMapa):
 
-    # Crea la ventana de juego
-    screen = pygame.display.set_mode(WINDOW_SIZE)
-    pygame.display.set_caption("Mapa impreso desde el AD_Engine")
-
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             pygame.quit()
@@ -546,6 +542,10 @@ if  (len(sys.argv) == 7):
     WINDOW_SIZE = (400, 400)
     GRID_SIZE = 20
     DRONE_SIZE = 20
+
+    # Crea la ventana de juego
+    screen = pygame.display.set_mode(WINDOW_SIZE)
+    pygame.display.set_caption("Mapa impreso desde el AD_Engine")
 
     ################################################################
 

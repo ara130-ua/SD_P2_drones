@@ -335,6 +335,25 @@ def dronRegistryAPI(alias):
 
 #----------------------------------------------------#
 
+### Menu Registry ###
+
+def menuRegistry(ALIAS_DRON):
+    option = 0
+    while option != 1 and option != 2:
+        print("De que forma quiere conectarse al AD_Registry? (1/2)")
+        print("1. Socket")
+        print("2. API REST")
+        option = int(input())
+        if(option == 1):
+            id, token = dronRegistry(IP_REGISTRY, PUERTO_REGISTRY, ALIAS_DRON)
+        elif(option == 2):
+            id, token = dronRegistryAPI(ALIAS_DRON)
+        else:
+            print("Opción no valida")
+            print("")
+
+    return id, token
+
 
 ########## MAIN ###########
 # ip y puerto del engine
@@ -376,24 +395,9 @@ if (len(sys.argv) == 9):
     screen = pygame.display.set_mode(WINDOW_SIZE)
     pygame.display.set_caption("Mapa impreso desde el dron: " + str(sys.argv[7]))
 
-    ################################################################
+    ############################ PYGAME ############################
 
-    # Menu para la conexion con el AD_Registry 
-    option = 0
-    while option != 1 and option != 2:
-        print("De que forma quiere conectarse al AD_Registry? (1/2)")
-        print("1. Socket")
-        print("2. API REST")
-        option = int(input())
-        if(option == 1):
-            id, token = dronRegistry(IP_REGISTRY, PUERTO_REGISTRY, ALIAS_DRON)
-        elif(option == 2):
-            id, token = dronRegistryAPI(ALIAS_DRON)
-        else:
-            print("Opción no valida")
-            print("")
-
-    ################################################################
+    id, token = menuRegistry(ALIAS_DRON)
 
     if id:
 
@@ -403,7 +407,13 @@ if (len(sys.argv) == 9):
         # Argumentos dronEngine( IP_Engine, Puerto_Engine, ID, Token)
     
         engineOnline = True
+        primeraVez = True
         while engineOnline:
+
+            if(primeraVez == False):
+                id, token = menuRegistry(ALIAS_DRON)
+            primeraVez=False
+
             if(dronEngine(IP_ENGINE, PUERTO_ENGINE, id, token)):
                 # conexion con el módulo AD_Kafka para recibir las ordenes
                 #Argumentos consumidor( IP_Kafka, Puerto_Kafka, ID )
