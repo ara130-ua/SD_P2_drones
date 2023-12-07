@@ -3,6 +3,9 @@ import threading
 import time
 import sys
 import sqlite3
+from fastapi import FastAPI
+
+app = FastAPI()
 
 HEADER = 64
 SERVER = "localhost" #socket.gethostbyname(socket.gethostname())
@@ -107,6 +110,18 @@ def registro_dron():
         conn, addr = server.accept()
         thread = threading.Thread(target=manejo_dron, args=(conn, addr))
         thread.start()
+
+
+# Funciones de la API REST
+# Funcion de registro de dron
+# Devuelve el token del dron y el id
+@app.get("/registroDron")
+def registroDron(alias: str):
+
+    id, token = create_Dron(str(alias))
+
+    print("Se ha registrado el dron: " + alias + " via API REST")
+    return {"token": token, "id": id}
 
 
 # main

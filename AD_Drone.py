@@ -8,6 +8,8 @@ import time
 import pygame
 import signal
 
+import requests
+
 
 HEADER = 64
 FORMAT = 'utf-8'
@@ -264,7 +266,7 @@ def dronEngine(ip_eng, puerto_eng, id, token):
         client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         client.connect(ADDR)
         print(f"Se ha establecido conexión en [{ADDR}]")
-        send(id+","+token, client)
+        send(str(id)+","+str(token), client)
         message = receive(client)
         if message == "OK":
             return True
@@ -311,7 +313,27 @@ def receive(client):
 ### Funciones de send y receive ###
 
 #----------------------------------------------------#
-    
+
+### Funciones de conexion via API REST ###
+
+def dronRegistryAPI(alias):
+    try:
+        response = requests.get("http://localhost:8000/registroDron?alias="+alias)
+        if(response.status_code == 200):
+            print("Se ha conectado correctamente al registry")
+            json = response.json()
+            id, token = json['id'], json['token']
+            return id, token
+        else:
+            print("No se ha podido conectar al registry")
+            return None
+    except Exception as exc:
+        print("No se ha podido conectar al registry por API ERROR: " + str(exc))
+        return None
+
+### Funciones de conexion via API REST ###
+
+#----------------------------------------------------#
 
 
 ########## MAIN ###########
@@ -356,14 +378,29 @@ if (len(sys.argv) == 9):
 
     ################################################################
 
-    #Argumentos dronRegistry( IP_Registry, Puerto_Registry, Alias_Dron )
-    id, token = dronRegistry(IP_REGISTRY, PUERTO_REGISTRY, ALIAS_DRON)
+    # Menu para la conexion con el AD_Registry 
+    option = 0
+    while option != 1 and option != 2:
+        print("De que forma quiere conectarse al AD_Registry? (1/2)")
+        print("1. Socket")
+        print("2. API REST")
+        option = int(input())
+        if(option == 1):
+            id, token = dronRegistry(IP_REGISTRY, PUERTO_REGISTRY, ALIAS_DRON)
+        elif(option == 2):
+            id, token = dronRegistryAPI(ALIAS_DRON)
+        else:
+            print("Opción no valida")
+            print("")
+
+    ################################################################
+
     if id:
 
         print( "id: ", id, " token: ", token)
         
-        # conexion con el módulo AD_Engine para darse de alta en el espectaculo
-        #Argumentos dronEngine( IP_Engine, Puerto_Engine, ID, Token)
+        # Conexion con el módulo AD_Engine para darse de alta en el espectaculo
+        # Argumentos dronEngine( IP_Engine, Puerto_Engine, ID, Token)
     
         engineOnline = True
         while engineOnline:
@@ -371,7 +408,7 @@ if (len(sys.argv) == 9):
                 # conexion con el módulo AD_Kafka para recibir las ordenes
                 #Argumentos consumidor( IP_Kafka, Puerto_Kafka, ID )
                 try:
-                    engineOnline = consumidor_mapas(id, pos_actual, pos_final)
+                    engineOnline = consumidor_mapas(str(id), pos_actual, pos_final)
     
                     if(engineOnline == False):
                         print("Se ha cerrado la conexión inesperadamente con el engine" + str(exc))
