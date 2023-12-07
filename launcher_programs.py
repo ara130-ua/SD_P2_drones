@@ -6,9 +6,9 @@ import time
 
 bbdd = "gnome-terminal -- bash -c 'rm bd1.db && python BBDD.py && exit; exec bash '"
 kafka = "gnome-terminal -- bash -c 'python launcher_kafka.py; exec bash '"
-engine = "gnome-terminal -- bash -c 'python ADs/AD_Engine.py 8050 4 localhost 9092 localhost 7050 ; exec bash '"
-registry = "gnome-terminal -- bash -c 'python ADs/AD_Registry.py 6050; exec bash '"
-weather = "gnome-terminal -- bash -c 'python ADs/AD_Wheather.py 7050; exec bash '"
+engine = "gnome-terminal -- bash -c 'python AD_Engine.py 8050 4 localhost 9092 localhost 7050 ; exec bash '"
+registry = "gnome-terminal -- bash -c 'python AD_Registry.py 6050; exec bash '"
+weather = "gnome-terminal -- bash -c 'python AD_Wheather.py 7050; exec bash '"
 
 # Lanzamos dron
 drones = "gnome-terminal -- bash -c 'python launcher_drones.py; exec bash '"

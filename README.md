@@ -15,6 +15,7 @@ AD_Wheather = 7050
 AD_Engine = 8050
 kafka = 9092
 
+Ejecutar en una terminal a parte: uvicorn AD_Registry:app --reload
 
 
 
