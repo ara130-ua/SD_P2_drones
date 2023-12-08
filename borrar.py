@@ -1,5 +1,8 @@
-variable1 = 1
-variable2 = 'holamundo'
+terminados = 0
+def checkDrones():
+    global terminados
+    terminados = terminados +1
 
-variable12 = str(variable1) + variable2
-print(variable12)
+terminados = terminados +1
+checkDrones()
+print(terminados)

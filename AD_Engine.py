@@ -12,6 +12,9 @@ from json import loads
 from kafka import KafkaConsumer
 import pygame
 import requests
+from fastapi import FastAPI
+
+app = FastAPI()
 
 HEADER = 64
 FORMAT = 'utf-8'
@@ -242,7 +245,7 @@ def setEstAutenticadoDron(id, estado):
     conexion = sqlite3.connect("bd1.db")
     try:
         cursor = conexion.cursor()
-        cursor.execute("update drones set estado='"+estAux+"' where id="+str(id))
+        cursor.execute("update drones set autenticado='"+estAux+"' where id="+str(id))
         conexion.commit()
         conexion.close()
     except:
@@ -508,6 +511,60 @@ def pygameMapa(listaMapa):
 
 #----------------------------------------------------------#
 
+### Funciones para la autenticación de los drones via API ###
+
+# variable global para controlar el número de drones autenticados
+
+@app.get("/autenticacionDron")
+def autenticacionDronAPI(id: int, token: str):
+    global terminados 
+    
+    # verificamos el token en la BBDD
+    if(str(leerTokenDron(id)) == token):
+        print("OK")
+        print("Token correcto")
+        print("El dron con id "+ str(id) + " se ha autenticado correctamente.")
+        # funcion para actualizar el estado del dron a autenticado y eliminar el token dado por registry
+        setEstAutenticadoDron(id, True)
+        deleteTokenDron(id)
+        return {"mensaje": "Token correcto"}
+    else:
+        print("KO")
+        print("Token incorrecto")
+        setEstAutenticadoDron(id, False)
+        print("El dron con id "+ str(id) + " no se ha podido autenticar.")
+        return {"mensaje": "Token incorrecto"}
+
+def checkAutenticados():
+    # nos conectamos a la BBDD y devolvemos el numero de drones que estan autenticados (autenticado = true)
+    conexion = sqlite3.connect("bd1.db")
+    try:
+        cursor = conexion.cursor()
+        cursor.execute("select count(*) from drones where autenticado='true'")
+        autenticados = cursor.fetchone()[0]
+        print("Hay " + str(autenticados) + " drones autenticados")
+        conexion.close()
+    except:
+        print("Error al leer el numero de drones autenticados")
+        conexion.close()
+        return None
+    # devolvemos el numero de drones autenticados
+    return autenticados
+
+def checkDronesAutenticados(numDronesFigura):
+
+    while int(checkAutenticados()) <= numDronesFigura:
+        if(int(checkAutenticados()) == numDronesFigura):
+            print("Todos los drones se han autenticado")
+            return True
+        
+        time.sleep(1)
+
+
+### Funciones para la autenticación de los drones via API ###
+
+#----------------------------------------------------------#
+
 #usaremos 6 argumentos, la BBDD no necesita de conexion
 # número máximo de drones
 # puerto de escucha del AD_Engine
@@ -602,7 +659,7 @@ if  (len(sys.argv) == 7):
                                 # comenzar espectaculo
                         
                                 # Autenticación de los drones
-                                if(autentificacionDrones(numMaxDrones, len(listaMapa))):
+                                if(checkDronesAutenticados( len(listaMapa)) ):
                                 
                                     print("Servidor clima")
                                     conexionClima(IP_WEATHER, PORT_WEATHER)

@@ -354,6 +354,32 @@ def menuRegistry(ALIAS_DRON):
 
     return id, token
 
+### Menu Registry ###
+
+#----------------------------------------------------#
+
+### Auntenticacion Engine por API REST ###
+
+def dronEngineAPI(id, token):
+
+    try:
+        response = requests.get(f"http://localhost:8001/autenticacionDron?id={id}&token={token}")
+        json = response.json()
+
+        if json["mensaje"] == "Token correcto":
+            return True
+        elif json["mensaje"] == "Token incorrecto":
+            return False
+        else: 
+            print("Ha ocurrido un error inesperado al autenticar el dron")
+            return False
+    except Exception as exc:
+        print("No se ha podido conectar al engine por API ERROR: " + str(exc))
+        return False
+
+### Auntenticacion Engine por API REST ###
+
+#----------------------------------------------------#
 
 ########## MAIN ###########
 # ip y puerto del engine
@@ -414,7 +440,7 @@ if (len(sys.argv) == 9):
                 id, token = menuRegistry(ALIAS_DRON)
             primeraVez=False
 
-            if(dronEngine(IP_ENGINE, PUERTO_ENGINE, id, token)):
+            if(dronEngineAPI(id, token)):
                 # conexion con el módulo AD_Kafka para recibir las ordenes
                 #Argumentos consumidor( IP_Kafka, Puerto_Kafka, ID )
                 try:
