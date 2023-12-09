@@ -15,7 +15,7 @@ AD_Wheather = 7050
 AD_Engine = 8050
 kafka = 9092
 API Registry-Dron = 8000
-API Dron-Engine = 8001
+API in Dron-Engine = 8001
 
 Ejecutar en una terminal a parte: uvicorn AD_Registry:app --reload
 

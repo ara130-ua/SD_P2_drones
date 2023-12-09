@@ -318,7 +318,7 @@ def receive(client):
 
 def dronRegistryAPI(alias):
     try:
-        response = requests.get("http://localhost:8000/registroDron?alias="+alias)
+        response = requests.get("https://127.0.0.1:8000/registroDron?alias="+alias, verify="certificado-firmado.crt")
         if(response.status_code == 200):
             print("Se ha conectado correctamente al registry")
             json = response.json()
@@ -363,7 +363,7 @@ def menuRegistry(ALIAS_DRON):
 def dronEngineAPI(id, token):
 
     try:
-        response = requests.get(f"http://localhost:8001/autenticacionDron?id={id}&token={token}")
+        response = requests.get(f"https://127.0.0.1:8001/autenticacionDron?id={id}&token={token}", verify="certificado-firmado.crt")
         json = response.json()
 
         if json["mensaje"] == "Token correcto":
