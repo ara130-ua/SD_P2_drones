@@ -27,8 +27,7 @@ subprocess.run(engine, shell=True)
 time.sleep(2)
 subprocess.run(registry, shell=True)
 time.sleep(2)
-subprocess.run(weather, shell=True)
-time.sleep(2)
+
 
 print("Pulse enter para lanzar los drones")
 input()

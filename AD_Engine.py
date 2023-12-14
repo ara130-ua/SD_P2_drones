@@ -1,3 +1,4 @@
+import random
 import socket
 import subprocess
 import threading
@@ -272,50 +273,43 @@ def deleteTokenDron(id):
 
 ### Funciones que manejan la conexion con el AD_Wheather ###
 
-def conexionClima(ipClima, puertoClima):
-    ADDR = (str(ipClima), int(puertoClima))
+def conexionClima():
 
-    client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     try:
-        client.connect(ADDR)
-        print(f"Se ha establecido conexión en [{ADDR}]")
-        thread = threading.Thread(target=manejoClima, args=(client, ADDR))
+        thread = threading.Thread(target=manejoClima, args=())
         thread.start()
-    except Exception as exc:
-        print("No se ha encontrado conexión")
+    except:
+        print("Error al crear el hilo")
+        
+    
+def manejoClima():
+    # sacaremos del fichero de texto ciudades.txt una ciudad aleatoria
+    while True:
+        # leemos el fichero de texto
+        with open('ciudades.txt', 'r') as archivo:
+            archivo = archivo.read()
+            # separamos las ciudades por el salto de linea
+            ciudades = archivo.split("\n")
+            # elegimos una ciudad aleatoria
+            ciudad = ciudades[random.randint(0, len(ciudades)-1)]
+            split = ciudad.split(",")
+            ciudad = split[0]
+            pais = split[1]
+            # llamamos a la api de openweather
+            temp, name = openweather(ciudad, pais)
 
+            temp = round(temp, 2)
+        
+        print("La temperatura en", name, "es de", temp,"ºC.")
 
-def manejoClima(conn, addr):
-    conectado = True
-    while conectado:
-        send("Petición de clima", conn)
-        # para compartir la información entre los hilos
-        # habrá que guardar los datos en la BBDD
-        datos_clima = receive(conn)
-        if(datos_clima == None):
-            conectado = False
-            break
-        print(f"Se ha recibido del AD_Weather {addr} los datos de clima: {datos_clima}")
-        # guardar en la BBDD
-        print(climaBBDD(datos_clima))
-        # saca la temperatura del string datos_clima
-        # si la temperatura es negativa, se envia a los drones a la base
-        for i in datos_clima:
-            if(i == "-"):
-                productor("CLIMA ADVERSO")
+        if(temp < 0):
+            productor("CLIMA ADVERSO")
 
+        time.sleep(15)
+        
 
-        time.sleep(10)
-    print(f"Se ha cerrado la conexión con el AD_Weather {addr}")
-
-### Funciones que manejan la conexion con el AD_Wheather ###
-
-#----------------------------------------------------------#
-
-### Nueva funcion con OpenWeather ###
-
-def openwether(lat, lon):
-    url = 'https://api.openweathermap.org/data/2.5/weather?lat='+str(lat)+'&lon='+str(lon)+'&appid=ab5fabb14bb7f9339114ee722d636a74'
+def openweather(ciudad, pais=''):
+    url = 'https://api.openweathermap.org/data/2.5/weather?q='+ ciudad +','+ pais +'&appid=ab5fabb14bb7f9339114ee722d636a74'
     r = requests.get(url)
     j = r.json()
     temp = j['main']['temp']
@@ -661,8 +655,8 @@ if  (len(sys.argv) == 7):
                                 # Autenticación de los drones
                                 if(checkDronesAutenticados( len(listaMapa)) ):
                                 
-                                    print("Servidor clima")
-                                    conexionClima(IP_WEATHER, PORT_WEATHER)
+                                    print("Openweather")
+                                    conexionClima()
 
                                     espectaculo(listaMapa, numMaxDrones)
 
