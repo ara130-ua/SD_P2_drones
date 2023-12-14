@@ -20,8 +20,16 @@ API in Dron-Engine = 8001
 Ejecutar en una terminal a parte: uvicorn AD_Registry:app --reload
 
 
-
-
-
+Modulo 1 
+    - Kafka
+    - Dron (certificado-firmado.crt / clave-privada)
+    - Front
+    
+Modulo 2
+    - Engine (API interna y externa)
+    - Registry (API interna)
+    
+Modulo 3
+    - Dron (certificado-firmado.crt / clave-privada)
 
 

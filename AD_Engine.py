@@ -1,5 +1,6 @@
 import random
 import socket
+import ssl
 import subprocess
 import threading
 import sys
@@ -14,6 +15,8 @@ from kafka import KafkaConsumer
 import pygame
 import requests
 from fastapi import FastAPI
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+from cryptography.hazmat.backends import default_backend
 
 app = FastAPI()
 
@@ -97,6 +100,24 @@ def espectaculo(listaMapa, numMaxDrones):
 
 
 ### Funciones que manejan kafka ###
+        
+#----------------------------------------------------------#
+
+### Funcion para encriptar/desencriptar los mensajes de kafka ###
+
+def encrypt_message(message, key):
+    cipher = Cipher(algorithms.AES(key), modes.CFB, backend=default_backend())
+    encryptor = cipher.encryptor()
+    ciphertext = encryptor.update(message.encode()) + encryptor.finalize()
+    return ciphertext
+
+def decrypt_message(ciphertext, key):
+    cipher = Cipher(algorithms.AES(key), modes.CFB, backend=default_backend())
+    decryptor = cipher.decryptor()
+    decrypted_message = decryptor.update(ciphertext) + decryptor.finalize()
+    return decrypted_message.decode()
+
+### Funcion para encriptar/desencriptar los mensajes de kafka ###
 
 #----------------------------------------------------------#
 
@@ -558,6 +579,47 @@ def checkDronesAutenticados(numDronesFigura):
 ### Funciones para la autenticación de los drones via API ###
 
 #----------------------------------------------------------#
+        
+### Funciones para compartir la contraseña de Kafka ###
+        
+def shareKafkaPassword():
+    context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+
+    # Se carga el certificado con clave pública y privada
+    #context.load_cert_chain(certfile="mycertfile", keyfile="mykeyfile")
+    context.load_cert_chain(cert, cert)
+
+    bindsocket = socket.socket()
+    bindsocket.bind((SERVER, PORT_ENGINE))
+    bindsocket.listen(5)
+
+    # Funcion que maneja cada conexion
+    def deal_with_client(connstream):
+        data = connstream.recv(1024)
+        # empty data means the client is finished with us    
+        print('Recibido ', repr(data))
+        #data = connstream.recv(1024)
+        print("Enviando ADIOS")      
+        connstream.send(b'ADIOS')
+        
+
+    print('Escuchando en ',SERVER, PORT_ENGINE, ' para comparir la clave')
+
+    while True:
+        newsocket, fromaddr = bindsocket.accept()
+        connstream = context.wrap_socket(newsocket, server_side=True)
+        print('Conexion recibida')
+        try:
+            deal_with_client(connstream)
+        finally:
+            connstream.shutdown(socket.SHUT_RDWR)
+            connstream.close()
+
+
+### Funciones para compartir la contraseña de Kafka ###
+
+#----------------------------------------------------------#
+            
 
 #usaremos 6 argumentos, la BBDD no necesita de conexion
 # número máximo de drones
@@ -582,6 +644,8 @@ if  (len(sys.argv) == 7):
     PORT_WEATHER = int(sys.argv[6])
     ADDR_WEATHER = (IP_WEATHER, PORT_WEATHER)
 
+    cert = 'certServ.pem'
+
     ############################ PYGAME ############################
 
     # export LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libstdc++.so.6
@@ -603,6 +667,10 @@ if  (len(sys.argv) == 7):
     print("Bienvenido al AD_Engine")
     programaActiveBool = True
     figuras = manejoFichero()
+
+    contraseñaKafka = b'\xe2\x9c\x93\x92\xf5U\x02\x06\xbb\x03\x1c5qKqT\xb9\x05'
+    #shareKafkaPassword()
+    
     # Bucle de menú principal
     while(programaActiveBool):
         print("Elige una opción:")
