@@ -415,10 +415,12 @@ def dronEngineSocketSeguro(IP_ENGINE, PUERTO_ENGINE):
             print(ssock.version()) #TLSv1.3
             print(ssock.getpeername()) #('127.0.0.1', 8443) Server
             print(ssock.getsockname()) #('127.0.0.1', 60605) Client     
-            print('Enviando HOLA MUNDO')
-            ssock.send(b'HOLA MUNDO');
+            print('Enviando saludo al engine')
+            mensaje="Hola soy el dron "+ALIAS_DRON
+            ssock.send(mensaje.encode())
             data = ssock.recv(1024)
-            print('Recibido', repr(data))
+            print('Recibida la contraseña ', repr(data))
+            contraseñaKafka = data
     
     return contraseñaKafka
 
@@ -489,8 +491,13 @@ if (len(sys.argv) == 9):
             primeraVez=False
 
             if(dronEngineAPI(id, token)):
+                # Pedimos al engine la contraseña de kafka
+                input("Pulsa enter para pedir la contraseña de kafka")
+                contraseñaKafka = dronEngineSocketSeguro(IP_ENGINE, PUERTO_ENGINE)
+                print("La contraseña de kafka es: " + str(contraseñaKafka))
+
                 # conexion con el módulo AD_Kafka para recibir las ordenes
-                #Argumentos consumidor( IP_Kafka, Puerto_Kafka, ID )
+                # Argumentos consumidor( IP_Kafka, Puerto_Kafka, ID )
                 try:
                     engineOnline = consumidor_mapas(str(id), pos_actual, pos_final)
     

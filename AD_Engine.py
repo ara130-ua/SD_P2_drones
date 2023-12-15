@@ -1,4 +1,5 @@
 import random
+import secrets
 import socket
 import ssl
 import subprocess
@@ -306,27 +307,31 @@ def conexionClima():
 def manejoClima():
     # sacaremos del fichero de texto ciudades.txt una ciudad aleatoria
     while True:
-        # leemos el fichero de texto
-        with open('ciudades.txt', 'r') as archivo:
-            archivo = archivo.read()
-            # separamos las ciudades por el salto de linea
-            ciudades = archivo.split("\n")
-            # elegimos una ciudad aleatoria
-            ciudad = ciudades[random.randint(0, len(ciudades)-1)]
-            split = ciudad.split(",")
-            ciudad = split[0]
-            pais = split[1]
-            # llamamos a la api de openweather
-            temp, name = openweather(ciudad, pais)
+        try:
+            # leemos el fichero de texto
+            with open('ciudades.txt', 'r') as archivo:
+                archivo = archivo.read()
+                # separamos las ciudades por el salto de linea
+                ciudades = archivo.split("\n")
+                # elegimos una ciudad aleatoria
+                ciudad = ciudades[random.randint(0, len(ciudades)-1)]
+                split = ciudad.split(",")
+                ciudad = split[0]
+                pais = split[1]
+                # llamamos a la api de openweather
+                temp, name = openweather(ciudad, pais)
 
-            temp = round(temp, 2)
-        
-        print("La temperatura en", name, "es de", temp,"ºC.")
+                temp = round(temp, 2)
+            
+            print("La temperatura en", name, "es de", temp,"ºC.")
 
-        if(temp < 0):
-            productor("CLIMA ADVERSO")
+            if(temp < 0):
+                productor("CLIMA ADVERSO")
 
-        time.sleep(15)
+            time.sleep(15)
+        except:
+            print("Error al conectar con Openweather")
+            
         
 
 def openweather(ciudad, pais=''):
@@ -582,7 +587,25 @@ def checkDronesAutenticados(numDronesFigura):
         
 ### Funciones para compartir la contraseña de Kafka ###
         
-def shareKafkaPassword():
+def generar_clave_simetrica(longitud):
+    # Genera una clave simétrica aleatoria en formato binario
+    clave_binaria = secrets.token_bytes(longitud)
+    return clave_binaria
+
+def shareKafkaPassword(contraseñaKafka):
+    # Funcion que maneja cada conexion
+    def deal_with_client(connstream, completados):
+        data = connstream.recv(1024)
+        # empty data means the client is finished with us    
+        print('Recibido ', repr(data))
+        completados = completados + 1
+        print("Contraseña enviada a ", completados, " drones")
+        #data = connstream.recv(1024)
+        print("Enviando contraseña de kafka", contraseñaKafka)     
+        connstream.send(contraseñaKafka)
+
+        return completados
+
     context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
 
     # Se carga el certificado con clave pública y privada
@@ -593,27 +616,25 @@ def shareKafkaPassword():
     bindsocket.bind((SERVER, PORT_ENGINE))
     bindsocket.listen(5)
 
-    # Funcion que maneja cada conexion
-    def deal_with_client(connstream):
-        data = connstream.recv(1024)
-        # empty data means the client is finished with us    
-        print('Recibido ', repr(data))
-        #data = connstream.recv(1024)
-        print("Enviando ADIOS")      
-        connstream.send(b'ADIOS')
-        
 
     print('Escuchando en ',SERVER, PORT_ENGINE, ' para comparir la clave')
 
-    while True:
+    completados = 0
+
+    while completados < numMaxDrones:
         newsocket, fromaddr = bindsocket.accept()
         connstream = context.wrap_socket(newsocket, server_side=True)
         print('Conexion recibida')
         try:
-            deal_with_client(connstream)
+            completados=deal_with_client(connstream, completados)
+        except ssl.SSLEOFError:
+            print("El cliente cerró la conexión")
         finally:
-            connstream.shutdown(socket.SHUT_RDWR)
-            connstream.close()
+            try:
+                connstream.shutdown(socket.SHUT_RDWR)
+                connstream.close()
+            except OSError:
+                print("El socket ya está cerrado")
 
 
 ### Funciones para compartir la contraseña de Kafka ###
@@ -668,8 +689,7 @@ if  (len(sys.argv) == 7):
     programaActiveBool = True
     figuras = manejoFichero()
 
-    contraseñaKafka = b'\xe2\x9c\x93\x92\xf5U\x02\x06\xbb\x03\x1c5qKqT\xb9\x05'
-    #shareKafkaPassword()
+    contraseñaKafka = generar_clave_simetrica(32)
     
     # Bucle de menú principal
     while(programaActiveBool):
@@ -721,9 +741,11 @@ if  (len(sys.argv) == 7):
                                 # comenzar espectaculo
                         
                                 # Autenticación de los drones
-                                if(checkDronesAutenticados( len(listaMapa)) ):
-                                
-                                    print("Openweather")
+                                if( checkDronesAutenticados(len(listaMapa)) ):
+                                    # Lanzamos el socket para compartir la contraseña de kafka
+                                    shareKafkaPassword(contraseñaKafka)
+
+                                    print("Conectando con  Openweather...")
                                     conexionClima()
 
                                     espectaculo(listaMapa, numMaxDrones)
