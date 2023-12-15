@@ -6,6 +6,8 @@ import time
 
 bbdd = "gnome-terminal -- bash -c 'rm bd1.db && python BBDD.py && exit; exec bash '"
 kafka = "gnome-terminal -- bash -c 'python launcher_kafka.py; exec bash '"
+API_inEngine = "gnome-terminal -- bash -c 'uvicorn AD_Engine:app --reload --host 127.0.0.1 --port 8001 --ssl-keyfile clave-privada.key --ssl-certfile certificado-firmado.crt; exec bash '"
+API_Registry = "gnome-terminal -- bash -c 'uvicorn AD_Registry:app --reload --host 127.0.0.1 --port 8000 --ssl-keyfile clave-privada.key --ssl-certfile certificado-firmado.crt; exec bash '"
 engine = "gnome-terminal -- bash -c 'python AD_Engine.py 8050 4 localhost 9092 localhost 7050 ; exec bash '"
 registry = "gnome-terminal -- bash -c 'python AD_Registry.py 6050; exec bash '"
 weather = "gnome-terminal -- bash -c 'python AD_Wheather.py 7050; exec bash '"
@@ -19,12 +21,13 @@ subprocess.run(bbdd, shell=True)
 time.sleep(2)
 subprocess.run(kafka, shell=True)
 time.sleep(2)
+subprocess.run(API_inEngine, shell=True)
+subprocess.run(API_Registry, shell=True)
 subprocess.run(engine, shell=True)
 time.sleep(2)
 subprocess.run(registry, shell=True)
 time.sleep(2)
-subprocess.run(weather, shell=True)
-time.sleep(2)
+
 
 print("Pulse enter para lanzar los drones")
 input()

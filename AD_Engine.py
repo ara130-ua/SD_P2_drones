@@ -1,4 +1,6 @@
+import random
 import socket
+import ssl
 import subprocess
 import threading
 import sys
@@ -12,6 +14,11 @@ from json import loads
 from kafka import KafkaConsumer
 import pygame
 import requests
+from fastapi import FastAPI
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+from cryptography.hazmat.backends import default_backend
+
+app = FastAPI()
 
 HEADER = 64
 FORMAT = 'utf-8'
@@ -93,6 +100,24 @@ def espectaculo(listaMapa, numMaxDrones):
 
 
 ### Funciones que manejan kafka ###
+        
+#----------------------------------------------------------#
+
+### Funcion para encriptar/desencriptar los mensajes de kafka ###
+
+def encrypt_message(message, key):
+    cipher = Cipher(algorithms.AES(key), modes.CFB, backend=default_backend())
+    encryptor = cipher.encryptor()
+    ciphertext = encryptor.update(message.encode()) + encryptor.finalize()
+    return ciphertext
+
+def decrypt_message(ciphertext, key):
+    cipher = Cipher(algorithms.AES(key), modes.CFB, backend=default_backend())
+    decryptor = cipher.decryptor()
+    decrypted_message = decryptor.update(ciphertext) + decryptor.finalize()
+    return decrypted_message.decode()
+
+### Funcion para encriptar/desencriptar los mensajes de kafka ###
 
 #----------------------------------------------------------#
 
@@ -242,7 +267,7 @@ def setEstAutenticadoDron(id, estado):
     conexion = sqlite3.connect("bd1.db")
     try:
         cursor = conexion.cursor()
-        cursor.execute("update drones set estado='"+estAux+"' where id="+str(id))
+        cursor.execute("update drones set autenticado='"+estAux+"' where id="+str(id))
         conexion.commit()
         conexion.close()
     except:
@@ -269,50 +294,43 @@ def deleteTokenDron(id):
 
 ### Funciones que manejan la conexion con el AD_Wheather ###
 
-def conexionClima(ipClima, puertoClima):
-    ADDR = (str(ipClima), int(puertoClima))
+def conexionClima():
 
-    client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     try:
-        client.connect(ADDR)
-        print(f"Se ha establecido conexión en [{ADDR}]")
-        thread = threading.Thread(target=manejoClima, args=(client, ADDR))
+        thread = threading.Thread(target=manejoClima, args=())
         thread.start()
-    except Exception as exc:
-        print("No se ha encontrado conexión")
+    except:
+        print("Error al crear el hilo")
+        
+    
+def manejoClima():
+    # sacaremos del fichero de texto ciudades.txt una ciudad aleatoria
+    while True:
+        # leemos el fichero de texto
+        with open('ciudades.txt', 'r') as archivo:
+            archivo = archivo.read()
+            # separamos las ciudades por el salto de linea
+            ciudades = archivo.split("\n")
+            # elegimos una ciudad aleatoria
+            ciudad = ciudades[random.randint(0, len(ciudades)-1)]
+            split = ciudad.split(",")
+            ciudad = split[0]
+            pais = split[1]
+            # llamamos a la api de openweather
+            temp, name = openweather(ciudad, pais)
 
+            temp = round(temp, 2)
+        
+        print("La temperatura en", name, "es de", temp,"ºC.")
 
-def manejoClima(conn, addr):
-    conectado = True
-    while conectado:
-        send("Petición de clima", conn)
-        # para compartir la información entre los hilos
-        # habrá que guardar los datos en la BBDD
-        datos_clima = receive(conn)
-        if(datos_clima == None):
-            conectado = False
-            break
-        print(f"Se ha recibido del AD_Weather {addr} los datos de clima: {datos_clima}")
-        # guardar en la BBDD
-        print(climaBBDD(datos_clima))
-        # saca la temperatura del string datos_clima
-        # si la temperatura es negativa, se envia a los drones a la base
-        for i in datos_clima:
-            if(i == "-"):
-                productor("CLIMA ADVERSO")
+        if(temp < 0):
+            productor("CLIMA ADVERSO")
 
+        time.sleep(15)
+        
 
-        time.sleep(10)
-    print(f"Se ha cerrado la conexión con el AD_Weather {addr}")
-
-### Funciones que manejan la conexion con el AD_Wheather ###
-
-#----------------------------------------------------------#
-
-### Nueva funcion con OpenWeather ###
-
-def openwether(lat, lon):
-    url = 'https://api.openweathermap.org/data/2.5/weather?lat='+str(lat)+'&lon='+str(lon)+'&appid=ab5fabb14bb7f9339114ee722d636a74'
+def openweather(ciudad, pais=''):
+    url = 'https://api.openweathermap.org/data/2.5/weather?q='+ ciudad +','+ pais +'&appid=ab5fabb14bb7f9339114ee722d636a74'
     r = requests.get(url)
     j = r.json()
     temp = j['main']['temp']
@@ -508,6 +526,101 @@ def pygameMapa(listaMapa):
 
 #----------------------------------------------------------#
 
+### Funciones para la autenticación de los drones via API ###
+
+# variable global para controlar el número de drones autenticados
+
+@app.get("/autenticacionDron")
+def autenticacionDronAPI(id: int, token: str):
+    global terminados 
+    
+    # verificamos el token en la BBDD
+    if(str(leerTokenDron(id)) == token):
+        print("OK")
+        print("Token correcto")
+        print("El dron con id "+ str(id) + " se ha autenticado correctamente.")
+        # funcion para actualizar el estado del dron a autenticado y eliminar el token dado por registry
+        setEstAutenticadoDron(id, True)
+        deleteTokenDron(id)
+        return {"mensaje": "Token correcto"}
+    else:
+        print("KO")
+        print("Token incorrecto")
+        setEstAutenticadoDron(id, False)
+        print("El dron con id "+ str(id) + " no se ha podido autenticar.")
+        return {"mensaje": "Token incorrecto"}
+
+def checkAutenticados():
+    # nos conectamos a la BBDD y devolvemos el numero de drones que estan autenticados (autenticado = true)
+    conexion = sqlite3.connect("bd1.db")
+    try:
+        cursor = conexion.cursor()
+        cursor.execute("select count(*) from drones where autenticado='true'")
+        autenticados = cursor.fetchone()[0]
+        print("Hay " + str(autenticados) + " drones autenticados")
+        conexion.close()
+    except:
+        print("Error al leer el numero de drones autenticados")
+        conexion.close()
+        return None
+    # devolvemos el numero de drones autenticados
+    return autenticados
+
+def checkDronesAutenticados(numDronesFigura):
+
+    while int(checkAutenticados()) <= numDronesFigura:
+        if(int(checkAutenticados()) == numDronesFigura):
+            print("Todos los drones se han autenticado")
+            return True
+        
+        time.sleep(1)
+
+
+### Funciones para la autenticación de los drones via API ###
+
+#----------------------------------------------------------#
+        
+### Funciones para compartir la contraseña de Kafka ###
+        
+def shareKafkaPassword():
+    context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+
+    # Se carga el certificado con clave pública y privada
+    #context.load_cert_chain(certfile="mycertfile", keyfile="mykeyfile")
+    context.load_cert_chain(cert, cert)
+
+    bindsocket = socket.socket()
+    bindsocket.bind((SERVER, PORT_ENGINE))
+    bindsocket.listen(5)
+
+    # Funcion que maneja cada conexion
+    def deal_with_client(connstream):
+        data = connstream.recv(1024)
+        # empty data means the client is finished with us    
+        print('Recibido ', repr(data))
+        #data = connstream.recv(1024)
+        print("Enviando ADIOS")      
+        connstream.send(b'ADIOS')
+        
+
+    print('Escuchando en ',SERVER, PORT_ENGINE, ' para comparir la clave')
+
+    while True:
+        newsocket, fromaddr = bindsocket.accept()
+        connstream = context.wrap_socket(newsocket, server_side=True)
+        print('Conexion recibida')
+        try:
+            deal_with_client(connstream)
+        finally:
+            connstream.shutdown(socket.SHUT_RDWR)
+            connstream.close()
+
+
+### Funciones para compartir la contraseña de Kafka ###
+
+#----------------------------------------------------------#
+            
+
 #usaremos 6 argumentos, la BBDD no necesita de conexion
 # número máximo de drones
 # puerto de escucha del AD_Engine
@@ -531,6 +644,8 @@ if  (len(sys.argv) == 7):
     PORT_WEATHER = int(sys.argv[6])
     ADDR_WEATHER = (IP_WEATHER, PORT_WEATHER)
 
+    cert = 'certServ.pem'
+
     ############################ PYGAME ############################
 
     # export LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libstdc++.so.6
@@ -552,6 +667,10 @@ if  (len(sys.argv) == 7):
     print("Bienvenido al AD_Engine")
     programaActiveBool = True
     figuras = manejoFichero()
+
+    contraseñaKafka = b'\xe2\x9c\x93\x92\xf5U\x02\x06\xbb\x03\x1c5qKqT\xb9\x05'
+    #shareKafkaPassword()
+    
     # Bucle de menú principal
     while(programaActiveBool):
         print("Elige una opción:")
@@ -602,10 +721,10 @@ if  (len(sys.argv) == 7):
                                 # comenzar espectaculo
                         
                                 # Autenticación de los drones
-                                if(autentificacionDrones(numMaxDrones, len(listaMapa))):
+                                if(checkDronesAutenticados( len(listaMapa)) ):
                                 
-                                    print("Servidor clima")
-                                    conexionClima(IP_WEATHER, PORT_WEATHER)
+                                    print("Openweather")
+                                    conexionClima()
 
                                     espectaculo(listaMapa, numMaxDrones)
 

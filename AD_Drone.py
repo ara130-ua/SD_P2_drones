@@ -1,4 +1,5 @@
 import socket
+import ssl
 import sys
 from kafka import KafkaProducer
 from kafka import KafkaConsumer
@@ -7,7 +8,8 @@ from json import dumps
 import time
 import pygame
 import signal
-
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+from cryptography.hazmat.backends import default_backend
 import requests
 
 
@@ -102,6 +104,24 @@ def productor(movimiento):
     time.sleep(1)
         
 ### Funciones para el manejo de kafka ###
+
+#----------------------------------------------------#
+
+# Funciones para encriptar y desencriptar mensajes
+    
+def encrypt_message(message, key):
+    cipher = Cipher(algorithms.AES(key), modes.CFB, backend=default_backend())
+    encryptor = cipher.encryptor()
+    ciphertext = encryptor.update(message.encode()) + encryptor.finalize()
+    return ciphertext
+
+def decrypt_message(ciphertext, key):
+    cipher = Cipher(algorithms.AES(key), modes.CFB, backend=default_backend())
+    decryptor = cipher.decryptor()
+    decrypted_message = decryptor.update(ciphertext) + decryptor.finalize()
+    return decrypted_message.decode()
+
+# Funciones para encriptar y desencriptar mensajes
 
 #----------------------------------------------------#
 
@@ -318,7 +338,7 @@ def receive(client):
 
 def dronRegistryAPI(alias):
     try:
-        response = requests.get("http://localhost:8000/registroDron?alias="+alias)
+        response = requests.get("https://127.0.0.1:8000/registroDron?alias="+alias, verify="certificado-firmado.crt")
         if(response.status_code == 200):
             print("Se ha conectado correctamente al registry")
             json = response.json()
@@ -354,6 +374,57 @@ def menuRegistry(ALIAS_DRON):
 
     return id, token
 
+### Menu Registry ###
+
+#----------------------------------------------------#
+
+### Auntenticacion Engine por API REST ###
+
+def dronEngineAPI(id, token):
+
+    try:
+        response = requests.get(f"https://127.0.0.1:8001/autenticacionDron?id={id}&token={token}", verify="certificado-firmado.crt")
+        json = response.json()
+
+        if json["mensaje"] == "Token correcto":
+            return True
+        elif json["mensaje"] == "Token incorrecto":
+            return False
+        else: 
+            print("Ha ocurrido un error inesperado al autenticar el dron")
+            return False
+    except Exception as exc:
+        print("No se ha podido conectar al engine por API ERROR: " + str(exc))
+        return False
+
+### Auntenticacion Engine por API REST ###
+
+#----------------------------------------------------#
+
+### Conexion via socket seguro con engine para conseguir la contraseña de kafka ###
+    
+def dronEngineSocketSeguro(IP_ENGINE, PUERTO_ENGINE):
+    # Se crea el contexto para el cliente indicándole que confie en certificados autofirmados
+    #context = ssl.create_default_context()
+    context = ssl._create_unverified_context()
+
+    contraseñaKafka = None
+
+    with socket.create_connection((IP_ENGINE, PUERTO_ENGINE)) as sock:
+        with context.wrap_socket(sock, server_hostname=IP_ENGINE) as ssock:
+            print(ssock.version()) #TLSv1.3
+            print(ssock.getpeername()) #('127.0.0.1', 8443) Server
+            print(ssock.getsockname()) #('127.0.0.1', 60605) Client     
+            print('Enviando HOLA MUNDO')
+            ssock.send(b'HOLA MUNDO');
+            data = ssock.recv(1024)
+            print('Recibido', repr(data))
+    
+    return contraseñaKafka
+
+### Conexion via socket seguro con engine para conseguir la contraseña de kafka ###
+    
+#----------------------------------------------------#
 
 ########## MAIN ###########
 # ip y puerto del engine
@@ -397,6 +468,9 @@ if (len(sys.argv) == 9):
 
     ############################ PYGAME ############################
 
+    # Conexion con Engine para conseguir la contraseña de kafka
+    # contraseñaKafka = dronEngineSocketSeguro(IP_ENGINE, PUERTO_ENGINE)
+
     id, token = menuRegistry(ALIAS_DRON)
 
     if id:
@@ -414,7 +488,7 @@ if (len(sys.argv) == 9):
                 id, token = menuRegistry(ALIAS_DRON)
             primeraVez=False
 
-            if(dronEngine(IP_ENGINE, PUERTO_ENGINE, id, token)):
+            if(dronEngineAPI(id, token)):
                 # conexion con el módulo AD_Kafka para recibir las ordenes
                 #Argumentos consumidor( IP_Kafka, Puerto_Kafka, ID )
                 try:
