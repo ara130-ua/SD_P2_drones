@@ -1,3 +1,4 @@
+import base64
 import random
 import secrets
 import socket
@@ -30,11 +31,15 @@ SERVER = "localhost" #socket.gethostbyname(socket.gethostname())
 ### Funciones que manejan kafka ###
 
 def productor(mapa):
+
+    print("Mapa enviado: " + str(mapa))
+
+    mapa = encrypt_message(mapa,contraseñaKafka)
     producer = KafkaProducer(
         value_serializer=lambda m: dumps(m).encode('utf-8'),
         bootstrap_servers=[ADDR_BROKER])
     
-    print("Mapa enviado: " + str(mapa))
+    print("Mapa encriptado enviado: " + str(mapa))
     producer.send('mapas1-topic', value=mapa)
     time.sleep(1)
 
@@ -46,21 +51,23 @@ def consumidor(listaDronMov, num_drones):
         group_id='engine',
         value_deserializer=lambda m: loads(m.decode('utf-8')),
         bootstrap_servers=[ADDR_BROKER]) 
-    
+
     finalizados = 0
     enBase = 0
     volverBase = False
 
     for m in consumer:
-        
-        if(setPosEstDrones(m.value[1], m.value[0], m.value[2][0], m.value[2][1])):
-            print("Posicion y estado del dron " + str(m.value[1]) + " actualizados correctamente")
-        actualizarMovimientos(listaDronMov, m.value) # podemos eliminarlo
 
-        if(m.value[0] == 'G'):
-            actualizarMovimientos(listaDronMov, m.value, True) # podemos eliminarlo
+        m = decrypt_message(m.value, contraseñaKafka)
+        
+        if(setPosEstDrones(m[1], m[0], m[2][0], m[2][1])):
+            print("Posicion y estado del dron " + str(m[1]) + " actualizados correctamente")
+        actualizarMovimientos(listaDronMov, m) # podemos eliminarlo
+
+        if(m[0] == 'G'):
+            actualizarMovimientos(listaDronMov, m, True) # podemos eliminarlo
             finalizados = finalizados + 1
-            print("Dron " + str(m.value[1]) + " finalizado")
+            print("Dron " + str(m[1]) + " finalizado")
             print(listaDronMov)
 
         if(finalizados == num_drones):
@@ -107,16 +114,52 @@ def espectaculo(listaMapa, numMaxDrones):
 ### Funcion para encriptar/desencriptar los mensajes de kafka ###
 
 def encrypt_message(message, key):
-    cipher = Cipher(algorithms.AES(key), modes.CFB, backend=default_backend())
+    cipher = Cipher(algorithms.AES(key), modes.CFB(b'\x00' * 16), backend=default_backend())
+    
+    if type(message) is list:
+        message = ' '.join(map(str, message))
+
     encryptor = cipher.encryptor()
     ciphertext = encryptor.update(message.encode()) + encryptor.finalize()
-    return ciphertext
+    return base64.b64encode(ciphertext).decode()
 
 def decrypt_message(ciphertext, key):
-    cipher = Cipher(algorithms.AES(key), modes.CFB, backend=default_backend())
+
+    ciphertext = base64.b64decode(ciphertext)
+    print("Ciphertext: " + str(ciphertext) + " con tipo de dato: " + str(type(ciphertext)))
+
+    cipher = Cipher(algorithms.AES(key), modes.CFB(b'\x00' * 16), backend=default_backend())
     decryptor = cipher.decryptor()
     decrypted_message = decryptor.update(ciphertext) + decryptor.finalize()
-    return decrypted_message.decode()
+
+    mensaje = decrypted_message.decode()
+    print("Mensaje desencriptado: " + str(mensaje) + " con tipo de dato: " + str(type(mensaje)))
+
+    return convertir_movimiento_strTOlist(mensaje)
+
+def convertir_movimiento_strTOlist(cadena):
+    lista = []
+    estado = cadena[2]
+    id = cadena[7]
+
+    if cadena[13].isdigit():
+        posx = cadena[12] + cadena[13]
+        if cadena[17].isdigit():
+            posy = cadena[16] + cadena[17]
+        else:
+            posy = cadena[16]
+    else:
+        posx = cadena[12]
+        if cadena[16].isdigit():
+            posy = cadena[15] + cadena[16]
+        else:
+            posy = cadena[15]
+
+    tupla = (int(posx), int(posy))
+    lista.append(str(estado))
+    lista.append(str(id))
+    lista.append(tupla)
+    return lista
 
 ### Funcion para encriptar/desencriptar los mensajes de kafka ###
 
@@ -762,7 +805,7 @@ if  (len(sys.argv) == 7):
                                 opcFiguraSelecBool = False
                             else:
                                 os.system("clear")
-                                print("Opción no válida")
+                                print("Opción no válida (a)")
                 
                     elif(opcionFigura == str(iterador)):
                         os.system("clear")
@@ -770,10 +813,10 @@ if  (len(sys.argv) == 7):
                         programaFigurasBool = False
                     else:
                         os.system("clear")
-                        print("Opción no válida")
+                        print("Opción no válida (b)")
                 except ValueError:
                     os.system("clear")
-                    print("Opción no válida")
+                    print("Opción no válida (c)" + str(ValueError))
 
         elif(opcion == "2"):
             os.system("clear")
@@ -781,7 +824,7 @@ if  (len(sys.argv) == 7):
             programaActiveBool = False
         else:
             os.system("clear")
-            print("Opción no válida")
+            print("Opción no válida (d)")
 
 
     

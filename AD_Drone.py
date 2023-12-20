@@ -1,3 +1,6 @@
+import ast
+import base64
+import re
 import socket
 import ssl
 import sys
@@ -18,8 +21,6 @@ FORMAT = 'utf-8'
 
 #----------------------------------------------------#
 
-def handle_alarm(signum, frame):
-    raise TimeoutError()
 
 ### Funciones para el manejo de kafka ###
 
@@ -44,15 +45,19 @@ def consumidor_mapas(id_dron, pos_actual, pos_final):
     primerConsumidorBool = True
     figuraCompleta = False
 
-    signal.signal(signal.SIGALRM, handle_alarm)
+    #signal.signal(signal.SIGALRM, handle_alarm)
     
     for m in consumer:
-
-        print("Recibido mapa: " + str(m.value))
+        print("Recibido mapa en el consumidor de mapas: " + str(m.value) + "con tipo de dato: " + str(type(m.value)))
+        
+        mensaje = decrypt_message(m.value, contraseñaKafka)
+        
+        print("Recibido mapa: " + str(mensaje))
+        
         if((pos_actual[0], pos_actual[1]) == (pos_final[0], pos_final[1]) and figuraCompleta == True):
             return True
 
-        if(m.value == "FIGURA COMPLETADA" or m.value == "CLIMA ADVERSO"):
+        if(mensaje == "FIGURA COMPLETADA" or mensaje == "CLIMA ADVERSO"):
             pos_final = (1,1)
             figuraCompleta = True
             print("Vuelvo a casa")
@@ -65,14 +70,14 @@ def consumidor_mapas(id_dron, pos_actual, pos_final):
             listaDronMov[0] = 'G'
             print("El dron con id: " + str(id_dron) + " ha llegado a su destino")
             productor(listaDronMov)
-            #print(stringMapa(crearMapa(m.value)))
-            pygameMapa(crearMapa(m.value))
+            #print(stringMapa(crearMapa(mensaje)))
+            pygameMapa(crearMapa(mensaje))
 
 
-        elif(primerConsumidorBool == False and isMapaActualizado(m.value, pos_actual, id_dron) and (pos_actual[0], pos_actual[1]) != (pos_final[0], pos_final[1])):
+        elif(primerConsumidorBool == False and isMapaActualizado(mensaje, pos_actual, id_dron) and (pos_actual[0], pos_actual[1]) != (pos_final[0], pos_final[1])):
             # crear y pintar el mapa
-            #print(stringMapa(crearMapa(m.value)))
-            pygameMapa(crearMapa(m.value))
+            #print(stringMapa(crearMapa(mensaje)))
+            pygameMapa(crearMapa(mensaje))
 
             pos_actual = run(pos_actual, pos_final)
             print("Posicion actualizada -->" + str(pos_actual))
@@ -81,21 +86,22 @@ def consumidor_mapas(id_dron, pos_actual, pos_final):
             productor(listaDronMov)
 
         elif(primerConsumidorBool):
-            pos_final = saca_pos_final(m.value, int(id_dron))
+            pos_final = saca_pos_final(mensaje, int(id_dron))
             print("La posicion a la que tengo que ir: "+ str(pos_final))
             pos_actual = run(pos_actual, pos_final)
             listaDronMov = ['R', id_dron, pos_actual]
             productor(listaDronMov)
             primerConsumidorBool = False
         else:
-            #print(stringMapa(crearMapa(m.value)))
-            pygameMapa(crearMapa(m.value))
+            #print(stringMapa(crearMapa(mensaje)))
+            pygameMapa(crearMapa(mensaje))
 
         print(listaDronMov)
             
             
 #manda los movimientos al topic de los moviemtos
 def productor(movimiento):
+    movimiento = encrypt_message(movimiento, contraseñaKafka)
     producer = KafkaProducer(
         value_serializer=lambda m: dumps(m).encode('utf-8'),
         bootstrap_servers=[ADDR_KAFKA])
@@ -110,16 +116,90 @@ def productor(movimiento):
 # Funciones para encriptar y desencriptar mensajes
     
 def encrypt_message(message, key):
-    cipher = Cipher(algorithms.AES(key), modes.CFB, backend=default_backend())
+
+    if(type(message) == list):
+        message = str(message)
+
+    cipher = Cipher(algorithms.AES(key), modes.CFB(b'\x00' * 16), backend=default_backend())
     encryptor = cipher.encryptor()
     ciphertext = encryptor.update(message.encode()) + encryptor.finalize()
-    return ciphertext
+    return base64.b64encode(ciphertext).decode()
 
+# Funcion modificada para poder desencriptar listas
 def decrypt_message(ciphertext, key):
-    cipher = Cipher(algorithms.AES(key), modes.CFB, backend=default_backend())
+    
+    ciphertext = base64.b64decode(ciphertext)
+    print("Ciphertext: " + str(ciphertext) + " con tipo de dato: " + str(type(ciphertext)))
+
+    cipher = Cipher(algorithms.AES(key), modes.CFB(b'\x00' * 16), backend=default_backend())
     decryptor = cipher.decryptor()
     decrypted_message = decryptor.update(ciphertext) + decryptor.finalize()
-    return decrypted_message.decode()
+    
+    mensaje = decrypted_message.decode()
+    
+    print("Mensaje desencriptado: " + str(mensaje) + " con tipo de dato: " + str(type(mensaje)))
+    
+    return convertir_cadenas_a_lista(mensaje)
+
+def convertir_cadenas_a_lista(cadenas):
+    # Recibe una cadena de texto con el formato: "(1, (5, 5)) (2, (5, 15)) (3, (10, 5)) (4, (10, 15))"
+    # Devuelve una lista con el formato: [(1, (5, 5)), (2, (5, 15)), (3, (10, 5)), (4, (10, 15))]
+    lista = []
+    num = 1
+
+    if(cadenas[0] == "("):
+        for i, elemento in enumerate(cadenas):
+            if elemento == "(" and cadenas[i+1] == str(num):
+                id = cadenas[i+1]
+
+                if cadenas[i+6].isdigit():
+                    posx = cadenas[i+5] + cadenas[i+6]
+                    if cadenas[i+10].isdigit():
+                        posy = cadenas[i+9] + cadenas[i+10]
+                    else:
+                        posy = cadenas[i+9]
+                else:
+                    posx = cadenas[i+5]
+                    if cadenas[i+9].isdigit():
+                        posy = cadenas[i+8] + cadenas[i+9]
+                    else:
+                        posy = cadenas[i+8]
+
+                tuple = (int(posx), int(posy))
+                tupletuple = (int(id), tuple)
+                lista.append(tupletuple)
+                num += 1
+
+    elif(cadenas[0] == "["):
+        
+        for i, elemento in enumerate(cadenas):
+            listaaux=[]
+            if elemento == "[":
+                estado = cadenas[i+2]
+                id = cadenas[i+6]
+
+                if cadenas[i+11].isdigit():
+                    posx = cadenas[i+10] + cadenas[i+11]
+                    if cadenas[i+15].isdigit():
+                        posy = cadenas[i+14] + cadenas[i+15]
+                    else:
+                        posy = cadenas[i+14]
+                else:
+                    posx = cadenas[i+10]
+                    if cadenas[i+14].isdigit():
+                        posy = cadenas[i+13] + cadenas[i+14]
+                    else:
+                        posy = cadenas[i+13]
+
+                tupla = (int(posx), int(posy))
+                listaaux.append(str(estado))
+                listaaux.append(int(id))
+                listaaux.append(tupla)
+                lista.append(listaaux)
+    else:
+        return cadenas
+        
+    return lista
 
 # Funciones para encriptar y desencriptar mensajes
 
@@ -470,9 +550,7 @@ if (len(sys.argv) == 9):
 
     ############################ PYGAME ############################
 
-    # Conexion con Engine para conseguir la contraseña de kafka
-    # contraseñaKafka = dronEngineSocketSeguro(IP_ENGINE, PUERTO_ENGINE)
-
+    
     id, token = menuRegistry(ALIAS_DRON)
 
     if id:
@@ -494,6 +572,7 @@ if (len(sys.argv) == 9):
                 # Pedimos al engine la contraseña de kafka
                 input("Pulsa enter para pedir la contraseña de kafka")
                 contraseñaKafka = dronEngineSocketSeguro(IP_ENGINE, PUERTO_ENGINE)
+                
                 print("La contraseña de kafka es: " + str(contraseñaKafka))
 
                 # conexion con el módulo AD_Kafka para recibir las ordenes
@@ -502,7 +581,7 @@ if (len(sys.argv) == 9):
                     engineOnline = consumidor_mapas(str(id), pos_actual, pos_final)
     
                     if(engineOnline == False):
-                        print("Se ha cerrado la conexión inesperadamente con el engine" + str(exc))
+                        print("Se ha cerrado la conexión inesperadamente con el engine (1) " + str(exc))
                     engineOnline = False
                     print("Vuelvo a casa")
                     while(pos_actual != (1,1)):
@@ -512,7 +591,7 @@ if (len(sys.argv) == 9):
                         time.sleep(1)
     
                 except Exception as exc:
-                    print("Se ha cerrado la conexión inesperadamente con el engine" + str(exc))
+                    print("Se ha cerrado la conexión inesperadamente con el engine (2) " + str(exc))
                     engineOnline = False
                     print("Vuelvo a casa")
                     while(pos_actual != (1,1)):
