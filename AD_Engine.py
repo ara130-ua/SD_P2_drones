@@ -76,7 +76,8 @@ def consumidor(listaDronMov, num_drones):
             productor("FIGURA COMPLETADA")
             finalizados = 0
             volverBase = True
-            
+
+        modificarMapaJson(getPosEstDrones())   
         pygameMapa(crearMapa(listaDronMov))
         productor(getPosEstDrones())
 
@@ -520,6 +521,25 @@ def stringMapa(listaMapa):
 
     return strMapa
 
+def modificarMapaJson(movimientos):
+
+    data = {
+        "mapa": {
+            "Drones": []
+        }
+    }
+
+    for movimiento in movimientos:
+        dron = {
+            "id": movimiento[0],
+            "estado": movimiento[1],
+            "pos": movimiento[2]
+        }
+        data["mapa"]["Drones"].append(dron)
+
+    with open('mapa.json', 'w') as archivo_json:
+        json.dump(data, archivo_json, indent=4)
+
 ### Funciones que manejan el fichero de drones y el mapa ###
 
 
@@ -644,8 +664,7 @@ def shareKafkaPassword(contraseñaKafka):
         print('Recibido ', repr(data))
         completados = completados + 1
         print("Contraseña enviada a ", completados, " drones")
-        #data = connstream.recv(1024)
-        print("Enviando contraseña de kafka", contraseñaKafka)     
+        #data = connstream.recv(1024)  
         connstream.send(contraseñaKafka)
 
         return completados

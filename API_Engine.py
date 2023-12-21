@@ -1,33 +1,33 @@
 import sqlite3
 from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse, FileResponse
+from fastapi.responses import HTMLResponse, FileResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
+#from socketio import AsyncServer, ASGIApp
+import asyncio
 import json
+
+# python3 -m venv fastapi-env
+# source fastapi-env/bin/activate
 
 app = FastAPI()
 templates = Jinja2Templates(directory="templates")
 
-from fastapi import FastAPI, Response
-import time
 
-app = FastAPI()
+#sio = AsyncServer(async_mode='asgi', cors_allowed_origins='*')
+#app.mount('/socket.io', ASGIApp(sio, app))
 
-@app.get("/events", response_class=Response)
-async def events():
-    def event_stream():
-        while True:
-            datos = obtener_datos()
-            yield f"data: {json.dumps(datos)}\n\n"
-            time.sleep(1)
-
-    return event_stream()
 
 # Ruta que renderiza el HTML con los datos actualizados del JSON
 @app.get("/", response_class=HTMLResponse)
 async def mostrar_datos(request: Request):
 
-    # Renderizar el HTML y pasar los datos al template
-    return templates.TemplateResponse("index.html", {"request": request, "datos": obtener_datos()})
+    # Renderizar el HTML y pasar los datos al templatessssssssssssssssssssssssssssssssssssssssssssss
+    return templates.TemplateResponse("prueba.html", {"request": request, "datos": obtener_datos()})
+
+@app.get("/drones", response_class=JSONResponse)
+async def obtener_datos_drones():
+    return obtener_datos()
+
 
 # Leer los datos desde tu archivo JSON (o de donde los obtengas)
 def obtener_datos():
@@ -45,18 +45,3 @@ def obtener_datos():
             movimientos.append({"id": dron_id, "estado": dron_estado, "pos_X": pos_X, "pos_Y": pos_Y})
 
         return movimientos
-
-def obtener_datos():
-
-    conn = sqlite3.connect('bd1.db')
-    cursor = conn.cursor()
-
-    cursor.execute("SELECT * FROM mapa")
-    datos = cursor.fetchall()
-
-    conn.close()
-
-    return datos
-
-    
-
