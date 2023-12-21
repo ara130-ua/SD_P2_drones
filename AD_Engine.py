@@ -741,6 +741,24 @@ def registrar_evento(entrada_registro):
 ### Funciones para el registro de eventos en BBDD ###
 
 #----------------------------------------------------------#
+    
+### Funciones para mandar los mapas a la BBDD ###
+    
+def mandarMapaBBDD(mapa):
+    # nos conectamos a la BBDD
+    conexion = sqlite3.connect("bd1.db")
+    try:
+        cursor = conexion.cursor()
+        cursor.execute("insert into mapas (mapa) values ('"+mapa+"')")
+        conexion.commit()
+        conexion.close()
+    except:
+        print("Error al enviar el mapa a la BBDD")
+        conexion.close()
+
+### Funciones para mandar los mapas a la BBDD ###
+
+#----------------------------------------------------------#
                 
             
 

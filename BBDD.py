@@ -59,3 +59,14 @@ try:
 except sqlite3.OperationalError:
     print("La tabla registro_auditoria ya existe")
 
+try:
+    # tabla mapas
+    conexion.execute('''
+        CREATE TABLE mapa (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            mapa TEXT,
+        )
+    ''')
+    print("se creo la tabla mapa")
+except sqlite3.OperationalError:
+    print("La tabla mapa ya existe")

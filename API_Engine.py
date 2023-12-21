@@ -1,3 +1,4 @@
+import sqlite3
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, FileResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
@@ -20,12 +21,13 @@ templates = Jinja2Templates(directory="templates")
 @app.get("/", response_class=HTMLResponse)
 async def mostrar_datos(request: Request):
 
-    # Renderizar el HTML y pasar los datos al template
+    # Renderizar el HTML y pasar los datos al templatessssssssssssssssssssssssssssssssssssssssssssss
     return templates.TemplateResponse("prueba.html", {"request": request, "datos": obtener_datos()})
 
 @app.get("/drones", response_class=JSONResponse)
 async def obtener_datos_drones():
     return obtener_datos()
+
 
 # Leer los datos desde tu archivo JSON (o de donde los obtengas)
 def obtener_datos():
@@ -43,7 +45,3 @@ def obtener_datos():
             movimientos.append({"id": dron_id, "estado": dron_estado, "pos_X": pos_X, "pos_Y": pos_Y})
 
         return movimientos
-
-
-
-    
