@@ -687,6 +687,7 @@ def shareKafkaPassword(contraseñaKafka):
                 
 ### Funciones para el registro de eventos en BBDD ###
 
+# Para auditar un evento, llamamos a la siguiente funcion:
 def auditar_evento(accion, ip_origen, descripcion):
     # Obtener la fecha y hora actual
     fecha_hora_actual = datetime.datetime.now()
