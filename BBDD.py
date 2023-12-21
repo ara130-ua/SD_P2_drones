@@ -62,11 +62,11 @@ except sqlite3.OperationalError:
 try:
     # tabla mapas
     conexion.execute('''
-        CREATE TABLE mapas (
+        CREATE TABLE mapa (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             mapa TEXT,
         )
     ''')
-    print("se creo la tabla mapas")
+    print("se creo la tabla mapa")
 except sqlite3.OperationalError:
-    print("La tabla mapas ya existe")
+    print("La tabla mapa ya existe")
