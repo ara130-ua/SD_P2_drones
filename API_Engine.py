@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, FileResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
-from socketio import AsyncServer, ASGIApp
+#from socketio import AsyncServer, ASGIApp
 import asyncio
 import json
 
@@ -11,8 +11,9 @@ import json
 app = FastAPI()
 templates = Jinja2Templates(directory="templates")
 
-sio = AsyncServer(async_mode='asgi', cors_allowed_origins='*')
-app.mount('/socket.io', ASGIApp(sio, app))
+
+#sio = AsyncServer(async_mode='asgi', cors_allowed_origins='*')
+#app.mount('/socket.io', ASGIApp(sio, app))
 
 
 # Ruta que renderiza el HTML con los datos actualizados del JSON
