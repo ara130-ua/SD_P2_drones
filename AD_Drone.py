@@ -501,7 +501,7 @@ def dronEngineSocketSeguro(IP_ENGINE, PUERTO_ENGINE):
             mensaje="Hola soy el dron "+ALIAS_DRON
             ssock.send(mensaje.encode())
             data = ssock.recv(1024)
-            print('Recibida la contraseña ', repr(data))
+#            print('Recibida la contraseña ', repr(data))
             contraseñaKafka = data
     
     return contraseñaKafka
@@ -575,7 +575,7 @@ if (len(sys.argv) == 9):
                 input("Pulsa enter para pedir la contraseña de kafka")
                 contraseñaKafka = dronEngineSocketSeguro(IP_ENGINE, PUERTO_ENGINE)
                 
-                print("La contraseña de kafka es: " + str(contraseñaKafka))
+#                print("La contraseña de kafka es: " + str(contraseñaKafka))
 
                 # conexion con el módulo AD_Kafka para recibir las ordenes
                 # Argumentos consumidor( IP_Kafka, Puerto_Kafka, ID )

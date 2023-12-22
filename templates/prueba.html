@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mapa</title>
+  <style>
+    table {
+      border-collapse: collapse;
+    }
+
+    td {
+      border: 1px solid black;
+      width: 20px;
+      height: 20px;
+    }
+
+    #errorMensaje {
+      color: red;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+    <h1>Mapa de los drones</h1>
+    <table id="mapa"></table>
+
+    <script>
+      // Generar la tabla
+      const mapa = document.getElementById('mapa');
+      for(let i = 0; i < 20; i++) {
+        const fila = document.createElement('tr');
+        for(let j = 0; j < 20; j++) {
+          const celda = document.createElement('td');
+          celda.style.height = '20px';
+          celda.style.border = '1px solid black';
+          fila.appendChild(celda);
+        }
+        mapa.appendChild(fila);
+      }
+      
+      /*
+      const source = new EventSource('/drones');
+  
+      source.onmessage = function(event) {
+        const datos = JSON.parse(event.data);
+        console.log(datos);
+        pintarMapa(datos);
+      };
+      */
+      
+      fetch('/drones')
+        .then(response => response.json())
+        .then(datos => {
+        pintarMapa(datos);
+      })
+        .catch(error => {
+        console.error('Error al obtener los datos:', error);
+      });
+  
+      function pintarMapa(drones) {
+        drones.forEach(dron => {
+          const fila = dron['pos_Y'];
+          const columna = dron['pos_X'];
+          const color = dron['estado'] === 'R' ? 'red' : 'green';
+
+          // Obtener la celda correspondiente
+          const celda = mapa.rows[fila-1].cells[columna-1];
+
+          // Pintar la celda con el color correspondiente
+          celda.style.backgroundColor = color;
+        });
+      }
+
+      function limpiarMapa() {
+        for(let i = 0; i < 20; i++) {
+          for(let j = 0; j < 20; j++) {
+            const celda = mapa.rows[i].cells[j];
+            celda.style.backgroundColor = 'white';
+          }
+        }
+      }
+
+      setInterval(() => {
+        fetch('/drones')
+          .then(response => response.json())
+          .then(datos => {
+          limpiarMapa();
+          pintarMapa(datos);
+        })
+          .catch(error => {
+          console.error('Error al obtener los datos:', error);
+        });
+      }, 1000);
+
+
+    </script>
+</body>
+</html>

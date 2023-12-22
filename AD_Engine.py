@@ -76,7 +76,9 @@ def consumidor(listaDronMov, num_drones):
             productor("FIGURA COMPLETADA")
             finalizados = 0
             volverBase = True
-            
+
+        setMovimientoMapaDron(getPosEstDrones())
+        modificarMapaJson(getPosEstDrones())   
         pygameMapa(crearMapa(listaDronMov))
         productor(getPosEstDrones())
 
@@ -332,6 +334,20 @@ def deleteTokenDron(id):
     except:
         print("Error al borrar el token del dron")
         conexion.close()
+
+def setMovimientoMapaDron(movimientos):
+    # nos conectamos a la BBDD
+    conexion = sqlite3.connect("bd1.db")
+    try:
+        cursor = conexion.cursor()
+        for movimiento in movimientos:
+            cursor.execute("insert into mapas (idDron, estado, coordenadaX, coordenadaY) values ("+str(movimiento[1])+",'"+str(movimiento[0])+"',"+str(movimiento[2][0])+","+str(movimiento[2][1])+")")
+        conexion.commit()
+        print("Movimientos de los drones actualizados en la BBDD del mapa")
+        conexion.close()
+    except:
+        print("Error al actualizar el movimiento del dron en el mapa")
+        conexion.close()
         
 ### Funciones de BBDD ###
 
@@ -520,6 +536,25 @@ def stringMapa(listaMapa):
 
     return strMapa
 
+def modificarMapaJson(movimientos):
+
+    data = {
+        "mapa": {
+            "Drones": []
+        }
+    }
+
+    for movimiento in movimientos:
+        dron = {
+            "id": movimiento[0],
+            "estado": movimiento[1],
+            "pos": movimiento[2]
+        }
+        data["mapa"]["Drones"].append(dron)
+
+    with open('mapa.json', 'w') as archivo_json:
+        json.dump(data, archivo_json, indent=4)
+
 ### Funciones que manejan el fichero de drones y el mapa ###
 
 
@@ -644,8 +679,7 @@ def shareKafkaPassword(contraseñaKafka):
         print('Recibido ', repr(data))
         completados = completados + 1
         print("Contraseña enviada a ", completados, " drones")
-        #data = connstream.recv(1024)
-        print("Enviando contraseña de kafka", contraseñaKafka)     
+        #data = connstream.recv(1024)  
         connstream.send(contraseñaKafka)
 
         return completados
@@ -720,6 +754,24 @@ def registrar_evento(entrada_registro):
     conexion.close()        
 
 ### Funciones para el registro de eventos en BBDD ###
+
+#----------------------------------------------------------#
+    
+### Funciones para mandar los mapas a la BBDD ###
+    
+def mandarMapaBBDD(mapa):
+    # nos conectamos a la BBDD
+    conexion = sqlite3.connect("bd1.db")
+    try:
+        cursor = conexion.cursor()
+        cursor.execute("insert into mapas (mapa) values ('"+mapa+"')")
+        conexion.commit()
+        conexion.close()
+    except:
+        print("Error al enviar el mapa a la BBDD")
+        conexion.close()
+
+### Funciones para mandar los mapas a la BBDD ###
 
 #----------------------------------------------------------#
                 
