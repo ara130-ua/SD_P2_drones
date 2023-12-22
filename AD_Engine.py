@@ -77,6 +77,7 @@ def consumidor(listaDronMov, num_drones):
             finalizados = 0
             volverBase = True
 
+        setMovimientoMapaDron(getPosEstDrones())
         modificarMapaJson(getPosEstDrones())   
         pygameMapa(crearMapa(listaDronMov))
         productor(getPosEstDrones())
@@ -332,6 +333,20 @@ def deleteTokenDron(id):
         print(f"Token del dron {id} borrado")
     except:
         print("Error al borrar el token del dron")
+        conexion.close()
+
+def setMovimientoMapaDron(movimientos):
+    # nos conectamos a la BBDD
+    conexion = sqlite3.connect("bd1.db")
+    try:
+        cursor = conexion.cursor()
+        for movimiento in movimientos:
+            cursor.execute("insert into mapas (idDron, estado, coordenadaX, coordenadaY) values ("+str(movimiento[1])+",'"+str(movimiento[0])+"',"+str(movimiento[2][0])+","+str(movimiento[2][1])+")")
+        conexion.commit()
+        print("Movimientos de los drones actualizados en la BBDD del mapa")
+        conexion.close()
+    except:
+        print("Error al actualizar el movimiento del dron en el mapa")
         conexion.close()
         
 ### Funciones de BBDD ###
