@@ -41,6 +41,7 @@ def productor(mapa):
         bootstrap_servers=[ADDR_BROKER])
     
     print("Mapa encriptado enviado: " + str(mapa))
+    auditar_evento('Engine_Kafka', SERVER, 'Se ha encriptado el mapa y enviado por kafka')
     producer.send('mapas1-topic', value=mapa)
     time.sleep(1)
 
@@ -63,22 +64,26 @@ def consumidor(listaDronMov, num_drones):
         
         if(setPosEstDrones(m[1], m[0], m[2][0], m[2][1])):
             print("Posicion y estado del dron " + str(m[1]) + " actualizados correctamente")
+            auditar_evento('Engine', SERVER, 'Se ha actualizado la posición y el estado del dron con id '+ str(m[1]))
         actualizarMovimientos(listaDronMov, m) # podemos eliminarlo
 
         if(m[0] == 'G'):
             actualizarMovimientos(listaDronMov, m, True) # podemos eliminarlo
             finalizados = finalizados + 1
             print("Dron " + str(m[1]) + " finalizado")
+            auditar_evento('Engine', SERVER, 'El dron con id '+ str(m[1]) + ' ha finalizado')
             print(listaDronMov)
 
         if(finalizados == num_drones):
             productor(getPosEstDrones())
             productor("FIGURA COMPLETADA")
+            auditar_evento('Engine', SERVER, 'Se ha completado la figura')
             finalizados = 0
             volverBase = True
 
+        setMovimientoMapaDrones(getPosEstDrones())
         modificarMapaJson(getPosEstDrones())   
-        pygameMapa(crearMapa(listaDronMov))
+        #pygameMapa(crearMapa(listaDronMov))
         productor(getPosEstDrones())
 
         if(volverBase==True):
@@ -136,6 +141,7 @@ def decrypt_message(ciphertext, key):
 
     mensaje = decrypted_message.decode()
     print("Mensaje desencriptado: " + str(mensaje) + " con tipo de dato: " + str(type(mensaje)))
+    auditar_evento('Engine_Kafka', SERVER, 'Se ha desencriptado un mensaje de kafka')
 
     return convertir_movimiento_strTOlist(mensaje)
 
@@ -178,8 +184,10 @@ def send(msg, client):
         client.send(send_length)
         print("Enviando mensaje: ", message)
         client.send(message)
+        auditar_evento('Engine_socket', SERVER, 'Se ha enviado datos al dron')
     except Exception as exc:
         print("Se ha cerrado la conexión inesperadamente")
+        auditar_evento('Engine_socket', SERVER, 'Falló el envio de datos al dron')
         client.close()
 
 def receive(client):
@@ -190,12 +198,14 @@ def receive(client):
             msg_length = int(msg_length)
             msg = client.recv(msg_length).decode(FORMAT)
             print(f"Se ha recibido: {msg}")
+            auditar_evento('Engine_socket', SERVER, 'Se ha recibido datos del dron')
             return msg
         else:
             #print("No se ha recibido nada")
             return None
     except:
         print("No se ha encontrado conexión o se ha caido")
+        auditar_evento('Engine_socket', SERVER, 'Falló la recepción de datos del dron')
         return None
 
     
@@ -247,9 +257,11 @@ def leerTokenDron(id):
         cursor = conexion.cursor()
         cursor.execute("select token from drones where id="+str(id))
         token = cursor.fetchone()[0]
+        auditar_evento('Engine_BBDD', SERVER, 'Se ha leido el token del dron con id '+ str(id))
         conexion.close()
     except sqlite3.OperationalError:
         print("Error al leer el token del dron")
+        auditar_evento('Engine_BBDD', SERVER, 'Error al leer el token del dron')
         conexion.close()
         return None
     # inicializamos las posiciones y el estado del dron y devolvemos el token
@@ -294,9 +306,11 @@ def setPosEstDrones(id, estado, coordenadaX, coordenadaY):
         cursor = conexion.cursor()
         cursor.execute("update drones set estado='"+estado+"', coordenadaX="+str(coordenadaX)+", coordenadaY="+str(coordenadaY)+" where id="+str(id))
         conexion.commit()
+        auditar_evento('Engine_BBDD', SERVER, 'Se ha actualizado la posición y el estado del dron con id '+ str(id))
         conexion.close()
     except:
         print("Error al actualizar la posición y el estado de los drones")
+        auditar_evento('Engine_BBDD', SERVER, 'Error al actualizar la posición y el estado de los drones')
         conexion.close()
         return False
     
@@ -314,10 +328,12 @@ def setEstAutenticadoDron(id, estado):
     try:
         cursor = conexion.cursor()
         cursor.execute("update drones set autenticado='"+estAux+"' where id="+str(id))
+        auditar_evento('Engine_BBDD', SERVER, 'Se ha actualizado el estado de autenticado del dron con id '+ str(id))
         conexion.commit()
         conexion.close()
     except:
         print("Error al actualizar el estado de autenticado del dron")
+        auditar_evento('Engine_BBDD', SERVER, 'Error al actualizar el estado de autenticado del dron')
         conexion.close()
 
 
@@ -330,9 +346,35 @@ def deleteTokenDron(id):
         conexion.commit()
         conexion.close()
         print(f"Token del dron {id} borrado")
+        auditar_evento('Engine_BBDD', SERVER, 'Se ha borrado el token del dron con id '+ str(id))
     except:
         print("Error al borrar el token del dron")
+        auditar_evento('Engine_BBDD', SERVER, 'Error al borrar el token del dron')
         conexion.close()
+
+    # movimientos [[id, estado, (posX, posY)],[id, estado, (posX, posY)], ...]
+def setMovimientoMapaDrones(movimientos):
+    # nos conectamos a la BBDD
+    conexion = sqlite3.connect("bd1.db")
+    try:
+        cursor = conexion.cursor()
+        for movimiento in movimientos:
+            idDron = movimiento[0]
+            estado = movimiento[1]
+            posX = movimiento[2][0]
+            posY = movimiento[2][1]
+            cursor.execute("update drones set idDrone='"+str(idDron)+"', coordenadaX="+str(posX)+", coordenadaY="+str(posY)+" where estado="+estado)
+        conexion.commit()
+        conexion.close()
+        print("Mapa actualizados correctamente")
+        auditar_evento('Engine_BBDD', SERVER, 'Se ha actualizado el mapa correctamente')
+    except:
+        print("Error al actualizar el mapa")
+        auditar_evento('Engine_BBDD', SERVER, 'Error al actualizar el mapa')
+        conexion.close()
+
+            
+
         
 ### Funciones de BBDD ###
 
@@ -376,6 +418,7 @@ def manejoClima():
             time.sleep(15)
         except:
             print("Error al conectar con Openweather")
+            auditar_evento('Engine_Openweather', SERVER, 'Error al conectar con Openweather')
             
         
 
@@ -405,6 +448,7 @@ def manejoTokenDrones(conn, addr):
         if(str(leerTokenDron(id)) == token):
             send("OK", conn)
             print("Token correcto")
+            auditar_evento('Engine_BBDD', SERVER, 'El dron con id '+ str(id) + ' se ha autenticado correctamente.')
             # funcion para actualizar el estado del dron a autenticado y eliminar el token dado por registry
             setEstAutenticadoDron(id, True)
             deleteTokenDron(id)
@@ -412,6 +456,7 @@ def manejoTokenDrones(conn, addr):
         else:
             send("KO", conn)
             print("Token incorrecto")
+            auditar_evento('Engine_BBDD', SERVER, 'El dron con id '+ str(id) + ' no se ha podido autenticar.')
             setEstAutenticadoDron(id, False)
             return False
 
@@ -420,6 +465,7 @@ def autentificacionDrones(numDrones, numDronesFigura):
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server.bind(ADDR_ENGINE) 
     print(f"AD_Engine escuchando en  {ADDR_ENGINE}")
+    auditar_evento('Engine_socket', SERVER, 'El AD_Engine esta escuchando')
     terminados = 0
     for i in range(numDrones):
         server.listen()
@@ -431,6 +477,7 @@ def autentificacionDrones(numDrones, numDronesFigura):
     # comprobar que todos los drones se han conectado
     if(terminados == numDronesFigura):
         print("Todos los drones se han conectado")
+        auditar_evento('Engine_socket', SERVER, 'Todos los drones se han conectado')
         return True
     
 
@@ -608,6 +655,7 @@ def autenticacionDronAPI(id: int, token: str):
         print("OK")
         print("Token correcto")
         print("El dron con id "+ str(id) + " se ha autenticado correctamente.")
+        auditar_evento('Engine_BBDD', SERVER, 'El dron con id '+ str(id) + ' se ha autenticado correctamente.')
         # funcion para actualizar el estado del dron a autenticado y eliminar el token dado por registry
         setEstAutenticadoDron(id, True)
         deleteTokenDron(id)
@@ -617,6 +665,7 @@ def autenticacionDronAPI(id: int, token: str):
         print("Token incorrecto")
         setEstAutenticadoDron(id, False)
         print("El dron con id "+ str(id) + " no se ha podido autenticar.")
+        auditar_evento('Engine_BBDD', SERVER, 'El dron con id '+ str(id) + ' no se ha podido autenticar.')
         return {"mensaje": "Token incorrecto"}
 
 def checkAutenticados():
@@ -627,9 +676,11 @@ def checkAutenticados():
         cursor.execute("select count(*) from drones where autenticado='true'")
         autenticados = cursor.fetchone()[0]
         print("Hay " + str(autenticados) + " drones autenticados")
+        auditar_evento('Número de drones', SERVER, 'Se ha leido el numero de drones autenticados')
         conexion.close()
     except:
         print("Error al leer el numero de drones autenticados")
+        auditar_evento('Engine_BBDD', SERVER, 'Error al leer el numero de drones autenticados')
         conexion.close()
         return None
     # devolvemos el numero de drones autenticados
@@ -681,6 +732,7 @@ def shareKafkaPassword(contraseñaKafka):
 
 
     print('Escuchando en ',SERVER, PORT_ENGINE, ' para comparir la clave')
+    auditar_evento('Engine escuchando', SERVER, 'Se ha compartido la contraseña de Kafka con los drones')
 
     completados = 0
 
@@ -740,26 +792,7 @@ def registrar_evento(entrada_registro):
 
 ### Funciones para el registro de eventos en BBDD ###
 
-#----------------------------------------------------------#
-    
-### Funciones para mandar los mapas a la BBDD ###
-    
-def mandarMapaBBDD(mapa):
-    # nos conectamos a la BBDD
-    conexion = sqlite3.connect("bd1.db")
-    try:
-        cursor = conexion.cursor()
-        cursor.execute("insert into mapas (mapa) values ('"+mapa+"')")
-        conexion.commit()
-        conexion.close()
-    except:
-        print("Error al enviar el mapa a la BBDD")
-        conexion.close()
-
-### Funciones para mandar los mapas a la BBDD ###
-
-#----------------------------------------------------------#
-                
+#----------------------------------------------------------#                
             
 
 #usaremos 6 argumentos, la BBDD no necesita de conexion

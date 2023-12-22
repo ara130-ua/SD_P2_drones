@@ -22,14 +22,37 @@ templates = Jinja2Templates(directory="templates")
 async def mostrar_datos(request: Request):
 
     # Renderizar el HTML y pasar los datos al templatessssssssssssssssssssssssssssssssssssssssssssss
-    return templates.TemplateResponse("prueba.html", {"request": request, "datos": obtener_datos()})
+    return templates.TemplateResponse("prueba.html", {"request": request, "datos": obtenerMapaBBDD()})
 
 @app.get("/drones", response_class=JSONResponse)
 async def obtener_datos_drones():
-    return obtener_datos()
+    return obtenerMapaBBDD()
+
+#[dron[0], dron[1], (dron[2], dron[3])]
+def obtenerMapaBBDD():
+    # nos conectamos a la BBDD
+    conexion = sqlite3.connect("bd1.db")
+    try:
+        cursor = conexion.cursor()
+        cursor.execute("select estado, id, coordenadaX, coordenadaY from drones")
+        infoDrones = cursor.fetchall()
+        conexion.close()
+    except:
+        print("Error al leer la posición y el estado de los drones")
+        conexion.close()
+        return None
+    
+    # devolvemos la información de los drones
+    listaDrones = []
+    for dron in infoDrones:
+        dron_id = dron[0]
+        dron_estado = dron[1]
+        pos_X, pos_Y = dron[2], dron[3]
+        listaDrones.append({"id": dron_id, "estado": dron_estado, "pos_X": pos_X, "pos_Y": pos_Y})
+    return listaDrones
 
 
-# Leer los datos desde tu archivo JSON (o de donde los obtengas)
+# Leer los datos desde tu archivo JSON
 def obtener_datos():
     with open("data.json", "r") as file:
         data = json.load(file)

@@ -64,7 +64,10 @@ try:
     conexion.execute('''
         CREATE TABLE mapa (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            mapa TEXT,
+            idDrone INTEGER,
+            estado char(1),
+            coordenadaX INTEGER,
+            coordenadaY INTEGER,
         )
     ''')
     print("se creo la tabla mapa")
