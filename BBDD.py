@@ -46,27 +46,14 @@ except sqlite3.OperationalError:
 
 try:
     #tabla registro_auditoria
-    conexion.execute('''
-        CREATE TABLE registro_auditoria (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            fecha_hora TEXT,
-            accion TEXT,
-            origen TEXT,
-            descripcion TEXT
-        )
-    ''')
+    conexion.execute("create table registro_auditoria (id integer primary key autoincrement, fecha_hora text, accion text, origen text, descripcion text)")
     print("se creo la tabla registro_auditoria")
 except sqlite3.OperationalError:
     print("La tabla registro_auditoria ya existe")
 
 try:
     # tabla mapas
-    conexion.execute('''
-        CREATE TABLE mapa (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            mapa TEXT,
-        )
-    ''')
+    conexion.execute("create table mapas (id integer primary key autoincrement, idDron integer, estado text, coordenadaX integer, coordenadaY integer)")
     print("se creo la tabla mapa")
 except sqlite3.OperationalError:
     print("La tabla mapa ya existe")
