@@ -178,9 +178,11 @@ def send(msg, client):
     try:
         client.send(send_length)
         print("Enviando mensaje: ", message)
+        auditar_evento("Engine", SERVER, "Enviando mensaje: " + str(message))
         client.send(message)
     except Exception as exc:
         print("Se ha cerrado la conexión inesperadamente")
+        auditar_evento("Cierre de conexión", SERVER, "Se ha cerrado la conexión inesperadamente")
         client.close()
 
 def receive(client):
@@ -191,12 +193,14 @@ def receive(client):
             msg_length = int(msg_length)
             msg = client.recv(msg_length).decode(FORMAT)
             print(f"Se ha recibido: {msg}")
+            auditar_evento("Engine", SERVER, "Se ha recibido: " + str(msg))
             return msg
         else:
             #print("No se ha recibido nada")
             return None
     except:
         print("No se ha encontrado conexión o se ha caido")
+        auditar_evento("Cierre de conexión", SERVER, "No se ha encontrado conexión o se ha caido")
         return None
 
     
@@ -231,11 +235,13 @@ def leerUltFilaClima():
         cursor = conexion.cursor()
         cursor.execute("select * from weather order by id desc limit 1")
         ultimaFila = cursor.fetchone()
+        auditar_evento("Clima", SERVER, "Última fila de la BBDD leída correctamente")
         conexion.close()
         # convertimos los datos a una tupla y la devolvemos
         datosClimaActual = ultimaFila[1], ultimaFila[2]
     except sqlite3.OperationalError:
         print("Error al leer la última fila de la BBDD")
+        auditar_evento("Error", SERVER, "Error al leer la última fila de la BBDD")
         conexion.close()
         return None
     return datosClimaActual
@@ -248,9 +254,11 @@ def leerTokenDron(id):
         cursor = conexion.cursor()
         cursor.execute("select token from drones where id="+str(id))
         token = cursor.fetchone()[0]
+        auditar_evento("Autenticación", SERVER, "Token del dron " + str(id) + " leído correctamente")
         conexion.close()
     except sqlite3.OperationalError:
         print("Error al leer el token del dron")
+        auditar_evento("Error", SERVER, "Error al leer el token del dron")
         conexion.close()
         return None
     # inicializamos las posiciones y el estado del dron y devolvemos el token
@@ -264,9 +272,11 @@ def setPosInicialDron(id):
         cursor = conexion.cursor()
         cursor.execute("update drones set estado='R', coordenadaX=1, coordenadaY=1 where id="+str(id))
         conexion.commit()
+        auditar_evento("Movimiento", SERVER, "Posición y estado del dron " + str(id) + " inicializados a R en la posición 1,1")
         conexion.close()
     except:
         print("Error al inicializar la posición y el estado del dron")
+        auditar_evento("Error", SERVER, "Error al inicializar la posición y el estado del dron")
         conexion.close()
 
 def getPosEstDrones():
@@ -276,9 +286,11 @@ def getPosEstDrones():
         cursor = conexion.cursor()
         cursor.execute("select estado, id, coordenadaX, coordenadaY from drones")
         infoDrones = cursor.fetchall()
+        auditar_evento("Movimiento", SERVER, "Posición y estado de los drones leídos correctamente")
         conexion.close()
     except:
         print("Error al leer la posición y el estado de los drones")
+        auditar_evento("Error", SERVER, "Error al leer la posición y el estado de los drones")
         conexion.close()
         return None
     
@@ -295,9 +307,11 @@ def setPosEstDrones(id, estado, coordenadaX, coordenadaY):
         cursor = conexion.cursor()
         cursor.execute("update drones set estado='"+estado+"', coordenadaX="+str(coordenadaX)+", coordenadaY="+str(coordenadaY)+" where id="+str(id))
         conexion.commit()
+        auditar_evento("Movimiento", SERVER, "Posición y estado del dron " + str(id) + " actualizados a " + str(estado) + " en la posición " + str(coordenadaX) + "," + str(coordenadaY))
         conexion.close()
     except:
         print("Error al actualizar la posición y el estado de los drones")
+        auditar_evento("Error", SERVER, "Error al actualizar la posición y el estado de los drones")
         conexion.close()
         return False
     
@@ -316,9 +330,11 @@ def setEstAutenticadoDron(id, estado):
         cursor = conexion.cursor()
         cursor.execute("update drones set autenticado='"+estAux+"' where id="+str(id))
         conexion.commit()
+        auditar_evento("Autenticación", SERVER, "Estado de autenticado del dron " + str(id) + " actualizado a " + estAux)
         conexion.close()
     except:
         print("Error al actualizar el estado de autenticado del dron")
+        auditar_evento("Error", SERVER, "Error al actualizar el estado de autenticado del dron")
         conexion.close()
 
 
@@ -331,8 +347,10 @@ def deleteTokenDron(id):
         conexion.commit()
         conexion.close()
         print(f"Token del dron {id} borrado")
+        auditar_evento("Autenticación", SERVER, "Token del dron " + str(id) + " borrado")
     except:
         print("Error al borrar el token del dron")
+        auditar_evento("Error", SERVER, "Error al borrar el token del dron")
         conexion.close()
 
 def setMovimientoMapaDron(movimientos):
@@ -344,9 +362,11 @@ def setMovimientoMapaDron(movimientos):
             cursor.execute("insert into mapas (idDron, estado, coordenadaX, coordenadaY) values ("+str(movimiento[1])+",'"+str(movimiento[0])+"',"+str(movimiento[2][0])+","+str(movimiento[2][1])+")")
         conexion.commit()
         print("Movimientos de los drones actualizados en la BBDD del mapa")
+        auditar_evento("Movimiento", SERVER, "Movimientos de los drones actualizados en la BBDD del mapa")
         conexion.close()
     except:
         print("Error al actualizar el movimiento del dron en el mapa")
+        auditar_evento("Error", SERVER, "Error al actualizar el movimiento del dron en el mapa")
         conexion.close()
         
 ### Funciones de BBDD ###
@@ -391,6 +411,7 @@ def manejoClima():
             time.sleep(15)
         except:
             print("Error al conectar con Openweather")
+            auditar_evento("Error", SERVER, "Error al conectar con Openweather")
             
         
 
@@ -420,6 +441,7 @@ def manejoTokenDrones(conn, addr):
         if(str(leerTokenDron(id)) == token):
             send("OK", conn)
             print("Token correcto")
+            auditar_evento("Autenticación", addr, "Token correcto del drone " + str(id) + " con IP ")
             # funcion para actualizar el estado del dron a autenticado y eliminar el token dado por registry
             setEstAutenticadoDron(id, True)
             deleteTokenDron(id)
@@ -427,6 +449,7 @@ def manejoTokenDrones(conn, addr):
         else:
             send("KO", conn)
             print("Token incorrecto")
+            auditar_evento("Autenticación", addr, "Token incorrecto del drone " + str(id) + " con IP ")
             setEstAutenticadoDron(id, False)
             return False
 
@@ -435,6 +458,7 @@ def autentificacionDrones(numDrones, numDronesFigura):
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server.bind(ADDR_ENGINE) 
     print(f"AD_Engine escuchando en  {ADDR_ENGINE}")
+    auditar_evento("Autenticación", SERVER, "AD_Engine escuchando en  " + str(ADDR_ENGINE))
     terminados = 0
     for i in range(numDrones):
         server.listen()
@@ -446,6 +470,7 @@ def autentificacionDrones(numDrones, numDronesFigura):
     # comprobar que todos los drones se han conectado
     if(terminados == numDronesFigura):
         print("Todos los drones se han conectado")
+        auditar_evento("Autenticación", SERVER, "Todos los drones se han conectado")
         return True
     
 
@@ -623,6 +648,7 @@ def autenticacionDronAPI(id: int, token: str):
         print("OK")
         print("Token correcto")
         print("El dron con id "+ str(id) + " se ha autenticado correctamente.")
+        auditar_evento("Autenticación", SERVER, "El dron con id "+ str(id) + " se ha autenticado correctamente.")
         # funcion para actualizar el estado del dron a autenticado y eliminar el token dado por registry
         setEstAutenticadoDron(id, True)
         deleteTokenDron(id)
@@ -632,6 +658,7 @@ def autenticacionDronAPI(id: int, token: str):
         print("Token incorrecto")
         setEstAutenticadoDron(id, False)
         print("El dron con id "+ str(id) + " no se ha podido autenticar.")
+        auditar_evento("Error", SERVER, "El dron con id "+ str(id) + " no se ha podido autenticar.")
         return {"mensaje": "Token incorrecto"}
 
 def checkAutenticados():
@@ -645,6 +672,7 @@ def checkAutenticados():
         conexion.close()
     except:
         print("Error al leer el numero de drones autenticados")
+        auditar_evento("Error", SERVER, "Error al leer el numero de drones autenticados")
         conexion.close()
         return None
     # devolvemos el numero de drones autenticados
@@ -696,6 +724,7 @@ def shareKafkaPassword(contraseñaKafka):
 
 
     print('Escuchando en ',SERVER, PORT_ENGINE, ' para comparir la clave')
+    auditar_evento("kafka", SERVER, "Escuchando en " + str(SERVER) + " para comparir la clave")
 
     completados = 0
 
@@ -707,6 +736,7 @@ def shareKafkaPassword(contraseñaKafka):
             completados=deal_with_client(connstream, completados)
         except ssl.SSLEOFError:
             print("El cliente cerró la conexión")
+            auditar_evento("Cierre de conexión", fromaddr, "El cliente cerró la conexión")
         finally:
             try:
                 connstream.shutdown(socket.SHUT_RDWR)
