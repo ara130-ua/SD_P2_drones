@@ -100,7 +100,7 @@ def espectaculo(listaMapa, numMaxDrones):
         if(consumidor(listaDronMovInicial, len(listaMapa))):
             print("Figura finalizada")
 
-        delete_topic1 = "gnome-terminal -- bash -c '/home/joanclq/kafka/bin/kafka-topics.sh --delete --topic mapas1-topic --bootstrap-server" + ADDR_BROKER + " && exit; exec bash'"
+        delete_topic1 = "gnome-terminal -- bash -c '/home/joanclq/kafka/bin/kafka-topics.sh --delete --topic mapas1-topic --bootstrap-server " + ADDR_BROKER + " && exit; exec bash'"
         delete_topic2 = "gnome-terminal -- bash -c '/home/joanclq/kafka/bin/kafka-topics.sh --delete --topic movimientos1-topic --bootstrap-server " + ADDR_BROKER + " && exit; exec bash'"
         subprocess.run(delete_topic2, shell=True) 
         subprocess.run(delete_topic1, shell=True)
@@ -723,6 +723,9 @@ def registrar_evento(entrada_registro):
 
 #----------------------------------------------------------#
                 
+def removeDronesBBDD():
+    os.system("rm bd1.db")
+    os.system("python BBDD.py")
             
 
 #usaremos 6 argumentos, la BBDD no necesita de conexion
@@ -834,6 +837,7 @@ if  (len(sys.argv) == 7):
                                     espectaculo(listaMapa, numMaxDrones)
 
                                     
+                                    removeDronesBBDD()
                                     # Hacer un bucle que cada x tiempo lea la BBDD y si hay un cambio en la temperatura (negativo)
                                     # llama a la función de vuelta a base, que envia a los drones a la posicion (1,1)
                                 

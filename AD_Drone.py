@@ -86,6 +86,7 @@ def consumidor_mapas(id_dron, pos_actual, pos_final):
             productor(listaDronMov)
 
         elif(primerConsumidorBool):
+            print("Saca la posicion final de :" + str(mensaje)+ " con tipo de dato: " + str(type(mensaje)) + " y el id del dron: " + str(id_dron))
             pos_final = saca_pos_final(mensaje, int(id_dron))
             print("La posicion a la que tengo que ir: "+ str(pos_final))
             pos_actual = run(pos_actual, pos_final)
@@ -282,6 +283,7 @@ def run(pos_actual, pos_final):
 def saca_pos_final(listaFigura, id_dron):
     #saca la posicion final del mapa
     #el mapa tiene que tener el siguiente formato: "id_dron-posX-posY#id_dron-posX-posY#..."
+    print("saca pos final: " + str(listaFigura))
 
     for dron in listaFigura:
         if(dron[0] == id_dron):

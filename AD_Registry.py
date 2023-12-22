@@ -91,6 +91,7 @@ def manejo_dron(conn, addr):
                 if(getTokenDron(id) != None):
                     print(f"El dron {alias} no se ha autenticado")
                     deleteTokenDron(id)
+            
                     
 
 def send(msg, server):
@@ -110,6 +111,37 @@ def registro_dron():
         conn, addr = server.accept()
         thread = threading.Thread(target=manejo_dron, args=(conn, addr))
         thread.start()
+
+def getDrones():
+    conexion = sqlite3.connect("bd1.db")
+    try:
+        cursor = conexion.cursor()
+        cursor.execute("select id, alias from drones")
+        drones = cursor.fetchall()
+        conexion.close()
+    except:
+        print("Error al obtener los drones")
+        conexion.close()
+        return "Error"
+    listaDrones = []
+    for dron in drones:
+        listaDrones.append([dron[0], dron[1]])
+    return listaDrones
+
+def updateIdsDrones(listaDrones):
+    conexion = sqlite3.connect("bd1.db")
+    try:
+        cursor = conexion.cursor()
+        it = 1
+        for dron in listaDrones:
+            cursor.execute("update drones set id="+ str(it) +" where alias='"+dron[1]+"'")
+            it = it + 1
+        conexion.commit()
+        conexion.close()
+    except:
+        print("Error al actualizar los ids de los drones")
+        conexion.close()
+        return "Error"
 
 
 # Funciones de la API REST
@@ -139,5 +171,8 @@ if(len(sys.argv) == 2):
     server.bind(ADDR)
 
     registro_dron()
+    print("Fuera del hilo")
+
+
 else:
     print("AD_Registry necesita estos argumentos <Puerto de escucha>")

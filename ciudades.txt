@@ -17,4 +17,3 @@ Praga,cz
 Budapest,hu
 Varsovia,pl
 Copenhague,dk
-Oslo,no

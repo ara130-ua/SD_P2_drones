@@ -39,7 +39,6 @@ try:
     cursor.execute("insert into weather (ciudad, pais) values ('Londres', 'gb')")
 
     conexion.commit()
-    conexion.close()
     
 except sqlite3.OperationalError:
     print("La tabla wheather ya existe")
