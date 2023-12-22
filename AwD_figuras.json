@@ -1,62 +1,62 @@
 { 
     "figuras":[
         { 
-            "Nombre":"Rectangulo",
+            "Nombre":"RectanguloV2",
             "Drones":[{
                 "ID":1,
-                "POS":"5,5"
+                "POS":"2,5"
                 },
                 {
                 "ID":2,
-                "POS":"5,15"
+                "POS":"2,10"
                 },
                 {
                 "ID":3,
-                "POS":"10,5"
+                "POS":"7,5"
                 },
                 {
                 "ID":4,
-                "POS":"10,15"
+                "POS":"7,10"
                 }
             ]
         },
         {
-            "Nombre": "Diagonal",
+            "Nombre": "DiagonalV2",
             "Drones":[{
                 "ID":1,
                 "POS":"2,2"
                 },
                 {
                 "ID":2,
-                "POS":"7,7"
+                "POS":"4,4"
                 },
                 {
                 "ID":3,
-                "POS":"12,12"
+                "POS":"6,6"
                 },
                 {
                 "ID":4,
-                "POS":"19,19"
+                "POS":"8,8"
                 }
             ]
         },
         {
-            "Nombre": "Esquinas",
+            "Nombre": "EsquinasV2",
             "Drones":[{
                 "ID":1,
-                "POS":"1,1"
+                "POS":"2,2"
                 },
                 {
                 "ID":2,
-                "POS":"1,20"
+                "POS":"2,18"
                 },
                 {
                 "ID":3,
-                "POS":"20,1"
+                "POS":"18,2"
                 },
                 {
                 "ID":4,
-                "POS":"20,20"
+                "POS":"18,18"
                 }
             ]
         }
