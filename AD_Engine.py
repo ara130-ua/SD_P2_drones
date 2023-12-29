@@ -102,6 +102,7 @@ def espectaculo(listaMapa, numMaxDrones):
         if(consumidor(listaDronMovInicial, len(listaMapa))):
             print("Figura finalizada")
 
+        ### cambiar el nombre de la carpeta ###
         delete_topic1 = "gnome-terminal -- bash -c '/home/joanclq/kafka/bin/kafka-topics.sh --delete --topic mapas1-topic --bootstrap-server " + ADDR_BROKER + " && exit; exec bash'"
         delete_topic2 = "gnome-terminal -- bash -c '/home/joanclq/kafka/bin/kafka-topics.sh --delete --topic movimientos1-topic --bootstrap-server " + ADDR_BROKER + " && exit; exec bash'"
         subprocess.run(delete_topic2, shell=True) 
@@ -209,42 +210,6 @@ def receive(client):
 #----------------------------------------------------------#
 
 ### Funciones de BBDD ###
-
-def climaBBDD(datos_clima):
-    tuplaClima = eval(datos_clima)
-    nombreCiudad = tuplaClima[0]
-    temperatura = tuplaClima[1]
-    conexion = sqlite3.connect("bd1.db")
-
-    try:
-        # comprobar los tipos de datos de nombre y de temperatura
-        conexion.execute("insert into weather (nombre, temperatura) values ('"+nombreCiudad+"',"+str(temperatura)+")")
-        conexion.commit()
-        conexion.close()
-        return("ciudad añadida a la BBDD")
-    except sqlite3.OperationalError:
-        print("Error al añadir la ciudad a la BBDD")
-        conexion.close()
-        return "Error", "Base de datos"
-    
-
-def leerUltFilaClima():
-    # nos conectamos a la BBDD y leemos la última fila
-    conexion = sqlite3.connect("bd1.db")
-    try:
-        cursor = conexion.cursor()
-        cursor.execute("select * from weather order by id desc limit 1")
-        ultimaFila = cursor.fetchone()
-        auditar_evento("Clima", SERVER, "Última fila de la BBDD leída correctamente")
-        conexion.close()
-        # convertimos los datos a una tupla y la devolvemos
-        datosClimaActual = ultimaFila[1], ultimaFila[2]
-    except sqlite3.OperationalError:
-        print("Error al leer la última fila de la BBDD")
-        auditar_evento("Error", SERVER, "Error al leer la última fila de la BBDD")
-        conexion.close()
-        return None
-    return datosClimaActual
 
     # no está testado #
 def leerTokenDron(id):
@@ -784,24 +749,6 @@ def registrar_evento(entrada_registro):
     conexion.close()        
 
 ### Funciones para el registro de eventos en BBDD ###
-
-#----------------------------------------------------------#
-    
-### Funciones para mandar los mapas a la BBDD ###
-    
-def mandarMapaBBDD(mapa):
-    # nos conectamos a la BBDD
-    conexion = sqlite3.connect("bd1.db")
-    try:
-        cursor = conexion.cursor()
-        cursor.execute("insert into mapas (mapa) values ('"+mapa+"')")
-        conexion.commit()
-        conexion.close()
-    except:
-        print("Error al enviar el mapa a la BBDD")
-        conexion.close()
-
-### Funciones para mandar los mapas a la BBDD ###
 
 #----------------------------------------------------------#
                 
