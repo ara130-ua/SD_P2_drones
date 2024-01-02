@@ -49,11 +49,12 @@ def manejoAutDrones(numeroDrones):
         if msg_length:
             print(f"Se ha recibido del dron {addr}: {msg_length}")
             msg_length = int(msg_length)
-            id = conn.recv(msg_length).decode(FORMAT)
-            print(f"Se ha recibido del dron {addr} el id: {id}")
+            alias = conn.recv(msg_length).decode(FORMAT)
+            print(f"Se ha recibido del dron {addr} el alias: {alias}")
             # generamos el token y se lo pasamos al dron
-            token = setTokenDron(id)
-            send(str(token), conn)
+            token=setTokenDron(alias)
+            send(token, conn)
+            
 
 
 
@@ -159,15 +160,15 @@ def getNumeroDronesBBDD():
         conexion.close()
         return "Error"
         
-def setTokenDron(id):
+def setTokenDron(alias):
     tokenRandom = randint(1000,99999)
     # nos conectamos a la BBDD
     conexion = sqlite3.connect("bd1.db")
     try:
         cursor = conexion.cursor()
-        cursor.execute("update drones set token="+str(tokenRandom)+" where id="+str(id))
+        cursor.execute("update drones set token="+str(tokenRandom)+" where alias="+str(alias))
         conexion.commit()
-        cursor.execute("select token from drones where id="+str(id))
+        cursor.execute("select token from drones where alias="+str(alias))
         token = cursor.fetchone()[0]
         conexion.close()
         return token
@@ -182,13 +183,13 @@ def setTokenDron(id):
     
 ### Funciones para el Mapa ###
     
-def getNumeroDronesMapa(nombreMapa):
-    with open ("AwD_figuras.json", "r") as archivo:
-        datos = json.load(archivo)
-        figuras = datos["figuras"]
-        for elemento in datos:
-            if(elemento["nombre"] == nombreMapa):
-                return elemento["Drones"]
+#def getNumeroDronesMapa(nombreMapa):
+#    with open ("AwD_figuras.json", "r") as archivo:
+#        datos = json.load(archivo)
+#        figuras = datos["figuras"]
+#        for elemento in datos:
+#            if(elemento["nombre"] == nombreMapa):
+#                return elemento["Drones"]
             
 
 
@@ -254,8 +255,7 @@ if(len(sys.argv) == 2):
 
     print("AD_Registry iniciado")
     # Obtenemos el mapa que el engine va a procesar
-    mapa = manejo_engine()
-    numeroDrones = getNumeroDronesMapa(mapa)
+    numeroDrones = manejo_engine()
 
     if(numeroDrones != None):
         # Abrimos el socket para registrar los drones
@@ -269,8 +269,7 @@ if(len(sys.argv) == 2):
 
     # controlamos el número de drones que se van a registrar
     while True:
-        mapa = manejo_engine()
-        numeroDrones = getNumeroDronesMapa(mapa)
+        numeroDrones = manejo_engine()
         if getNumeroDronesBBDD() == numeroDrones:
             # abrimos socket para mandar token a los drones
             manejoAutDrones(numeroDrones)

@@ -345,7 +345,8 @@ def actualizaMapa(listaMapa, dronMov):
 ### Funciones de conexión con los módulos ###
 
 # conexión con el módulo AD_Registry para darse de alta en el sistema
-def dronRegistry(ip_reg, puerto_reg, alias):
+
+def dronRegistry(ip_reg, puerto_reg, alias, primeraVez):
     
     ADDR = (str(ip_reg), int(puerto_reg))
 
@@ -355,8 +356,12 @@ def dronRegistry(ip_reg, puerto_reg, alias):
         print(f"Se ha establecido conexión en [{ADDR}]")
         send(alias, client)
         message = receive(client)
-        id, token = message.split(",")
-        return id, token
+        # en la segunda vuelta únicamente se recibe el token
+        if primeraVez:
+            id, token = message.split(",")
+            return id, token
+        else:
+            return message
     except Exception as exc:
         return None, None
 

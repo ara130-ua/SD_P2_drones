@@ -77,8 +77,7 @@ def consumidor(listaDronMov, num_drones):
             finalizados = 0
             volverBase = True
 
-        setMovimientoMapaDron(getPosEstDrones())
-        modificarMapaJson(getPosEstDrones())   
+        setMovimientoMapaDron(getPosEstDrones()) 
         pygameMapa(crearMapa(listaDronMov))
         productor(getPosEstDrones())
 
@@ -393,6 +392,33 @@ def openweather(ciudad, pais=''):
 
 #----------------------------------------------------------#
 
+### Funciones de cliente para el AD_Registry ###
+
+def engineRegistry(ADDR_REGISTRY, numDronesMapa):
+
+    client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    try:
+        client.connect(ADDR_REGISTRY)
+        print(f"Conectado a AD_Registry en {ADDR_REGISTRY}")
+        auditar_evento("Engine", SERVER, "Conectado a AD_Registry")
+        send(numDronesMapa, client)
+        message = receive(client)
+    except:
+        print("Error al conectarse con AD_Registry")
+        auditar_evento("Error", SERVER, "Error al conectarse con AD_Registry")
+        client.close()
+        return False
+    
+    if(message == "OK"):
+        print("Se ha recibido OK")
+        auditar_evento("Engine", SERVER, "Se ha recibido OK")
+        return True
+        
+
+### Funciones de cliente para el AD_Registry ###
+
+#----------------------------------------------------------#
+
 ### Funciones que manejan la conexion con los drones ###
 
 def manejoTokenDrones(conn, addr):
@@ -516,37 +542,17 @@ def actualizaMapa(listaMapa, dronMov):
     return listaMapa
        
 
-def stringMapa(listaMapa):
-    strMapa = ""
-    for fila in listaMapa:
-        strMapa = strMapa + "| "
-        for elemento in fila:
-            strMapa = strMapa + "[" + elemento[0] + "," + str(elemento[1]) + "] "
-        strMapa = strMapa + "|\n"
-
-    return strMapa
-
-def modificarMapaJson(movimientos):
-
-    data = {
-        "mapa": {
-            "Drones": []
-        }
-    }
-
-    for movimiento in movimientos:
-        dron = {
-            "id": movimiento[0],
-            "estado": movimiento[1],
-            "pos": movimiento[2]
-        }
-        data["mapa"]["Drones"].append(dron)
-
-    with open('mapa.json', 'w') as archivo_json:
-        json.dump(data, archivo_json, indent=4)
+#def stringMapa(listaMapa):
+#    strMapa = ""
+#    for fila in listaMapa:
+#        strMapa = strMapa + "| "
+#        for elemento in fila:
+#            strMapa = strMapa + "[" + elemento[0] + "," + str(elemento[1]) + "] "
+#        strMapa = strMapa + "|\n"
+#
+#    return strMapa
 
 ### Funciones que manejan el fichero de drones y el mapa ###
-
 
 #----------------------------------------------------#
 
@@ -752,9 +758,9 @@ def registrar_evento(entrada_registro):
 
 #----------------------------------------------------------#
                 
-def removeDronesBBDD():
-    os.system("rm bd1.db")
-    os.system("python BBDD.py")
+#def removeDronesBBDD():
+#    os.system("rm bd1.db")
+#    os.system("python BBDD.py")
             
 
 #usaremos 6 argumentos, la BBDD no necesita de conexion
@@ -779,6 +785,9 @@ if  (len(sys.argv) == 7):
     IP_WEATHER = sys.argv[5]
     PORT_WEATHER = int(sys.argv[6])
     ADDR_WEATHER = (IP_WEATHER, PORT_WEATHER)
+
+    IP_REGISTRY = int(sys.argv[1])
+    PORT_REGISTRY = 6050
 
     cert = 'certServ.pem'
 
@@ -854,21 +863,25 @@ if  (len(sys.argv) == 7):
                                 os.system("clear")
                                 print("Comenzando espectaculo")
                                 # comenzar espectaculo
-                        
-                                # Autenticación de los drones
-                                if( checkDronesAutenticados(len(listaMapa)) ):
-                                    # Lanzamos el socket para compartir la contraseña de kafka
-                                    shareKafkaPassword(contraseñaKafka)
+                                # mandar mapa al registry
+                                if(engineRegistry((IP_REGISTRY, PORT_REGISTRY), len(listaMapa))):
+                                    # Autenticación de los drones
+                                    if( checkDronesAutenticados(len(listaMapa)) ):
+                                        # Lanzamos el socket para compartir la contraseña de kafka
+                                        shareKafkaPassword(contraseñaKafka)
 
-                                    print("Conectando con  Openweather...")
-                                    conexionClima()
+                                        print("Conectando con  Openweather...")
+                                        conexionClima()
 
-                                    espectaculo(listaMapa, numMaxDrones)
+                                        espectaculo(listaMapa, numMaxDrones)
 
                                     
-                                    removeDronesBBDD()
+                                    #removeDronesBBDD()
                                     # Hacer un bucle que cada x tiempo lea la BBDD y si hay un cambio en la temperatura (negativo)
                                     # llama a la función de vuelta a base, que envia a los drones a la posicion (1,1)
+                                else:
+                                    print("No se ha podido mandar el mapa al AD_Registry")
+                                    auditar_evento("Error", SERVER, "No se ha podido conectar con el AD_Registry")
                                 
 
                                 opcFiguraSelecBool = False
