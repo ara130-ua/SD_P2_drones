@@ -25,7 +25,7 @@ app = FastAPI()
 
 HEADER = 64
 FORMAT = 'utf-8'
-SERVER = "localhost" #socket.gethostbyname(socket.gethostname())
+SERVER = "localhost" 
 
 #----------------------------------------------------------#
 
@@ -175,15 +175,11 @@ def send(msg, client):
     msg_length = len(message)
     send_length = str(msg_length).encode(FORMAT)
     send_length += b' ' * (HEADER - len(send_length))
-    try:
-        client.send(send_length)
-        print("Enviando mensaje: ", message)
-        auditar_evento("Engine", SERVER, "Enviando mensaje: " + str(message))
-        client.send(message)
-    except Exception as exc:
-        print("Se ha cerrado la conexión inesperadamente")
-        auditar_evento("Cierre de conexión", SERVER, "Se ha cerrado la conexión inesperadamente")
-        client.close()
+    print("Enviando mensaje: ", send_length)
+    client.send(send_length)
+    print("Enviando mensaje: ", message)
+    auditar_evento("Engine", SERVER, "Enviando mensaje: " + str(message))
+    client.send(message)
 
 def receive(client):
     try:
@@ -401,18 +397,20 @@ def engineRegistry(ADDR_REGISTRY, numDronesMapa):
         client.connect(ADDR_REGISTRY)
         print(f"Conectado a AD_Registry en {ADDR_REGISTRY}")
         auditar_evento("Engine", SERVER, "Conectado a AD_Registry")
+        print(f"Enviando el número de drones que van a participar en el espectaculo: {numDronesMapa}")
         send(numDronesMapa, client)
         message = receive(client)
+        return True
     except:
         print("Error al conectarse con AD_Registry")
         auditar_evento("Error", SERVER, "Error al conectarse con AD_Registry")
         client.close()
         return False
     
-    if(message == "OK"):
-        print("Se ha recibido OK")
-        auditar_evento("Engine", SERVER, "Se ha recibido OK")
-        return True
+#    if(message == "OK"):
+#        print("Se ha recibido OK")
+#        auditar_evento("Engine", SERVER, "Se ha recibido OK")
+#        return True
         
 
 ### Funciones de cliente para el AD_Registry ###
@@ -786,7 +784,7 @@ if  (len(sys.argv) == 7):
     PORT_WEATHER = int(sys.argv[6])
     ADDR_WEATHER = (IP_WEATHER, PORT_WEATHER)
 
-    IP_REGISTRY = int(sys.argv[1])
+    IP_REGISTRY = SERVER
     PORT_REGISTRY = 6050
 
     cert = 'certServ.pem'

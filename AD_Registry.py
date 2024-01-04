@@ -74,7 +74,7 @@ def manejo_engine():
     try:
         msg_length = conn.recv(HEADER).decode(FORMAT)
     except Exception as exc:
-        print("Se ha cerrado la conexión inesperadamente")
+        print(f"Se ha cerrado la conexión inesperadamente: {exc}")
         conn.close()
     if msg_length:
         print(f"Se ha recibido del engine {addr}: {msg_length}")
@@ -252,51 +252,55 @@ if(len(sys.argv) == 2):
 
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server.bind(ADDR)
+    registryOnline = True
 
     print("AD_Registry iniciado")
-    # Obtenemos el mapa que el engine va a procesar
-    numeroDrones = manejo_engine()
-
-    if(numeroDrones != None):
-        # Abrimos el socket para registrar los drones
-        registro_dron(numeroDrones)
-        # borramos el token de los drones que no se han autenticado
-        deleteTokenDron()
-        if(isTokenDronDeleted()):
-            print("Se han borrado los tokens de los drones que no se han autenticado")
-        else:
-            print("No se ha podido borrar los tokens de los drones")
-
-    # controlamos el número de drones que se van a registrar
-    while True:
+    while registryOnline:
+        # Obtenemos el mapa que el engine va a procesar
         numeroDrones = manejo_engine()
-        if getNumeroDronesBBDD() == numeroDrones:
-            # abrimos socket para mandar token a los drones
-            manejoAutDrones(numeroDrones)
+
+        if(numeroDrones != None):
+            # Abrimos el socket para registrar los drones
+            registro_dron(numeroDrones)
+            # borramos el token de los drones que no se han autenticado
             deleteTokenDron()
             if(isTokenDronDeleted()):
                 print("Se han borrado los tokens de los drones que no se han autenticado")
             else:
                 print("No se ha podido borrar los tokens de los drones")
-        elif getNumeroDronesBBDD() < numeroDrones:
-            print(f"Se necesitan {numeroDrones-getNumeroDronesBBDD()} drones más")
-            # abrimos socket para registrar los drones
-            registro_dron(numeroDrones-getNumeroDronesBBDD())
-            manejoAutDrones(getNumeroDronesBBDD())
-            deleteTokenDron()
-            if(isTokenDronDeleted()):
-                print("Se han borrado los tokens de los drones que no se han autenticado")
-            else:
-                print("No se ha podido borrar los tokens de los drones")
-        elif getNumeroDronesBBDD() > numeroDrones:
-            print(f"Hay {getNumeroDronesBBDD()} drones registrados, se necesitan {numeroDrones} drones")
-            # abrimos socket para autenticar los drones
-            manejoAutDrones(getNumeroDronesBBDD())
-            deleteTokenDron()
-            if(isTokenDronDeleted()):
-                print("Se han borrado los tokens de los drones que no se han autenticado")
-            else:
-                print("No se ha podido borrar los tokens de los drones")
+
+            # controlamos el número de drones que se van a registrar
+            while True:
+                numeroDrones = manejo_engine()
+                if getNumeroDronesBBDD() == numeroDrones:
+                    # abrimos socket para mandar token a los drones
+                    manejoAutDrones(numeroDrones)
+                    deleteTokenDron()
+                    if(isTokenDronDeleted()):
+                        print("Se han borrado los tokens de los drones que no se han autenticado")
+                    else:
+                        print("No se ha podido borrar los tokens de los drones")
+                elif getNumeroDronesBBDD() < numeroDrones:
+                    print(f"Se necesitan {numeroDrones-getNumeroDronesBBDD()} drones más")
+                    # abrimos socket para registrar los drones
+                    registro_dron(numeroDrones-getNumeroDronesBBDD())
+                    manejoAutDrones(getNumeroDronesBBDD())
+                    deleteTokenDron()
+                    if(isTokenDronDeleted()):
+                        print("Se han borrado los tokens de los drones que no se han autenticado")
+                    else:
+                        print("No se ha podido borrar los tokens de los drones")
+                elif getNumeroDronesBBDD() > numeroDrones:
+                    print(f"Hay {getNumeroDronesBBDD()} drones registrados, se necesitan {numeroDrones} drones")
+                    # abrimos socket para autenticar los drones
+                    manejoAutDrones(getNumeroDronesBBDD())
+                    deleteTokenDron()
+                    if(isTokenDronDeleted()):
+                        print("Se han borrado los tokens de los drones que no se han autenticado")
+                    else:
+                        print("No se ha podido borrar los tokens de los drones")
+        else:
+            print("No se ha podido obtener el mapa")
 
 
 else:
