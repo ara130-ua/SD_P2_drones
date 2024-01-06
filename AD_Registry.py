@@ -38,13 +38,13 @@ def manejo_dron(conn, addr):
 def manejoAutDrones(numeroDrones):
     server.listen()
     print(f"AD_Registry escuchando en {SERVER}, para autenticar {numeroDrones} drones")
-    while numeroDrones:
+    for i in range(numeroDrones):
         conn, addr = server.accept()
         print(f"Se ha conectado el dron {addr}")
         try:
             msg_length = conn.recv(HEADER).decode(FORMAT)
         except Exception as exc:
-            print("Se ha cerrado la conexión inesperadamente")
+            print(f"Se ha cerrado la conexión inesperadamente, {exc}")
             conn.close()
         if msg_length:
             print(f"Se ha recibido del dron {addr}: {msg_length}")
@@ -53,7 +53,7 @@ def manejoAutDrones(numeroDrones):
             print(f"Se ha recibido del dron {addr} el alias: {alias}")
             # generamos el token y se lo pasamos al dron
             token=setTokenDron(alias)
-            send(token, conn)
+            send(str(token), conn)
             
 
 
@@ -114,7 +114,7 @@ def create_Dron(alias):
 
         return "Error", "Base de datos"
     
-def deleteTokenDron(id):
+def deleteTokenDron():
     # hacemos un timeout de 20 seg y comprobamos que el token del dron se ha borrado de la BBDD
     time.sleep(20)
     # nos conectamos a la BBDD
@@ -124,8 +124,8 @@ def deleteTokenDron(id):
         cursor.execute("update drones set token=null where autenticado=false")
         conexion.commit()
         conexion.close()
-    except:
-        print("Error al borrar el token del dron")
+    except Exception as exc:
+        print(f"Error al borrar el token del dron: {exc}")
         conexion.close()
 
 def isTokenDronDeleted():
@@ -172,8 +172,8 @@ def setTokenDron(alias):
         token = cursor.fetchone()[0]
         conexion.close()
         return token
-    except:
-        print("Error al obtener el token del dron")
+    except Exception as exc:
+        print(f"Error al obtener el token del dron: {exc}")
         conexion.close()
         return None
         
@@ -212,7 +212,7 @@ def send(msg, server):
 def registro_dron(numeroDrones):
     server.listen()
     print(f"AD_Registry escuchando en {SERVER}, para registrar {numeroDrones} drones")
-    while numeroDrones:
+    for i in range(numeroDrones):
         conn, addr = server.accept()
         thread = threading.Thread(target=manejo_dron, args=(conn, addr))
         thread.start()
@@ -257,7 +257,7 @@ if(len(sys.argv) == 2):
     print("AD_Registry iniciado")
     while registryOnline:
         # Obtenemos el mapa que el engine va a procesar
-        numeroDrones = manejo_engine()
+        numeroDrones = int(manejo_engine())
 
         if(numeroDrones != None):
             # Abrimos el socket para registrar los drones
@@ -271,7 +271,7 @@ if(len(sys.argv) == 2):
 
             # controlamos el número de drones que se van a registrar
             while True:
-                numeroDrones = manejo_engine()
+                numeroDrones = int(manejo_engine())
                 if getNumeroDronesBBDD() == numeroDrones:
                     # abrimos socket para mandar token a los drones
                     manejoAutDrones(numeroDrones)

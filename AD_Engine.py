@@ -94,6 +94,8 @@ def espectaculo(listaMapa, numMaxDrones):
     listaDronMovInicial = []
     for dronMov in listaMapa:
         listaDronMovInicial.append(['R', dronMov[0], (1,1)])
+
+    initMapaDronesBBDD(len(listaMapa))
     
     if(numMaxDrones < len(listaMapa)):
         print("No hay suficientes drones para realizar el espectaculo")
@@ -102,11 +104,13 @@ def espectaculo(listaMapa, numMaxDrones):
             print("Figura finalizada")
 
         ### cambiar el nombre de la carpeta ###
-        delete_topic1 = "gnome-terminal -- bash -c '/home/joanclq/kafka/bin/kafka-topics.sh --delete --topic mapas1-topic --bootstrap-server " + ADDR_BROKER + " && exit; exec bash'"
-        delete_topic2 = "gnome-terminal -- bash -c '/home/joanclq/kafka/bin/kafka-topics.sh --delete --topic movimientos1-topic --bootstrap-server " + ADDR_BROKER + " && exit; exec bash'"
+        delete_topic1 = "gnome-terminal -- bash -c '/home/adri-portatil/kafka/bin/kafka-topics.sh --delete --topic mapas1-topic --bootstrap-server " + ADDR_BROKER + " && exit; exec bash'"
+        delete_topic2 = "gnome-terminal -- bash -c '/home/adri-portatil/kafka/bin/kafka-topics.sh --delete --topic movimientos1-topic --bootstrap-server " + ADDR_BROKER + " && exit; exec bash'"
         subprocess.run(delete_topic2, shell=True) 
         subprocess.run(delete_topic1, shell=True)
         # si hace algo raro time.sleep(5)
+        for i in range(len(listaMapa)):
+            setEstAutenticadoDron(i+1, False)
 
 
 
@@ -206,7 +210,6 @@ def receive(client):
 
 ### Funciones de BBDD ###
 
-    # no está testado #
 def leerTokenDron(id):
     # nos conectamos a la BBDD y leemos el token del dron con la id recibida
     conexion = sqlite3.connect("bd1.db")
@@ -317,16 +320,32 @@ def setMovimientoMapaDron(movimientos):
     # nos conectamos a la BBDD
     conexion = sqlite3.connect("bd1.db")
     try:
+        # borramos todos los movimientos de los drones
         cursor = conexion.cursor()
         for movimiento in movimientos:
-            cursor.execute("insert into mapas (idDron, estado, coordenadaX, coordenadaY) values ("+str(movimiento[1])+",'"+str(movimiento[0])+"',"+str(movimiento[2][0])+","+str(movimiento[2][1])+")")
+            cursor.execute("update mapas set coordenadaX="+str(movimiento[2][0])+", coordenadaY="+str(movimiento[2][1])+", estado="+str(movimiento[0])+" where idDron="+str(movimiento[1]))
         conexion.commit()
         print("Movimientos de los drones actualizados en la BBDD del mapa")
         auditar_evento("Movimiento", SERVER, "Movimientos de los drones actualizados en la BBDD del mapa")
         conexion.close()
+    except Exception as exc:
+        print(f"Error al actualizar el movimiento del dron en el mapa: {exc}")
+        auditar_evento("Error", SERVER, f"Error al actualizar el movimiento del dron en el mapa, {exc}")
+        conexion.close()
+
+def initMapaDronesBBDD(numDrones):
+    conexion = sqlite3.connect("bd1.db")
+    try:
+        cursor = conexion.cursor()
+        for i in range(numDrones):
+            cursor.execute("insert into mapas (idDron, estado, coordenadaX, coordenadaY) values ("+str(i+1)+", 'R', 1, 1)")
+        conexion.commit()
+        print("Mapa de drones inicializado correctamente")
+        auditar_evento("Movimiento", SERVER, "Mapa de drones inicializado correctamente")
+        conexion.close()
     except:
-        print("Error al actualizar el movimiento del dron en el mapa")
-        auditar_evento("Error", SERVER, "Error al actualizar el movimiento del dron en el mapa")
+        print("Error al inicializar el mapa de drones")
+        auditar_evento("Error", SERVER, "Error al inicializar el mapa de drones")
         conexion.close()
         
 ### Funciones de BBDD ###
