@@ -166,9 +166,9 @@ def setTokenDron(alias):
     conexion = sqlite3.connect("bd1.db")
     try:
         cursor = conexion.cursor()
-        cursor.execute("update drones set token="+str(tokenRandom)+" where alias="+str(alias))
+        cursor.execute("update drones set token="+str(tokenRandom)+" where alias='"+str(alias)+"'")
         conexion.commit()
-        cursor.execute("select token from drones where alias="+str(alias))
+        cursor.execute("select token from drones where alias='"+str(alias)+"'")
         token = cursor.fetchone()[0]
         conexion.close()
         return token
