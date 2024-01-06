@@ -472,6 +472,8 @@ def dronRegistryAPI(alias):
     except Exception as exc:
         print("No se ha podido conectar al registry por API ERROR: " + str(exc))
         return None
+    
+#def dronRegistryAutenticacionAPI(alias):
 
 ### Funciones de conexion via API REST ###
 
@@ -487,14 +489,15 @@ def menuRegistry(ALIAS_DRON, primeraVez):
         print("2. API REST")
         option = int(input())
         if(option == 1):
-            id, token = dronRegistry(IP_REGISTRY, PUERTO_REGISTRY, ALIAS_DRON, primeraVez)
-        elif(option == 2):
-            id, token = dronRegistryAPI(ALIAS_DRON)
+            return dronRegistry(IP_REGISTRY, PUERTO_REGISTRY, ALIAS_DRON, primeraVez)
+        elif(option == 2 and primeraVez):
+            return dronRegistryAPI(ALIAS_DRON)
+        #elif(option == 2 and primeraVez == False):
+        #    return dronRegistryAutenticacionAPI(ALIAS_DRON)
         else:
             print("Opción no valida")
             print("")
 
-    return id, token
 
 ### Menu Registry ###
 
@@ -607,7 +610,7 @@ if (len(sys.argv) == 9):
         while engineOnline:
 
             if(primeraVez == False):
-                id, token = menuRegistry(ALIAS_DRON, primeraVez)
+                token = menuRegistry(ALIAS_DRON, primeraVez)
             primeraVez=False
 
             if(dronEngineAPI(id, token)):

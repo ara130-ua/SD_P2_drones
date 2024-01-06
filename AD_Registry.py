@@ -256,49 +256,62 @@ if(len(sys.argv) == 2):
 
     print("AD_Registry iniciado")
     while registryOnline:
-        # Obtenemos el mapa que el engine va a procesar
         numeroDrones = int(manejo_engine())
-
+        # Obtenemos el mapa que el engine va a procesar
+        numeroDronesBool = True
         if(numeroDrones != None):
-            # Abrimos el socket para registrar los drones
-            registro_dron(numeroDrones)
-            # borramos el token de los drones que no se han autenticado
-            deleteTokenDron()
-            if(isTokenDronDeleted()):
-                print("Se han borrado los tokens de los drones que no se han autenticado")
-            else:
-                print("No se ha podido borrar los tokens de los drones")
+            while numeroDronesBool:
+                print("Introduce el número de drones que se van a registrar por socket")
+                numeroDronesRegistrar = int(input())
+                if(numeroDronesRegistrar.isdigit() and numeroDronesRegistrar > 0 and numeroDronesRegistrar <= numeroDrones):
+                    numeroDronesBool = False
+                    # Abrimos el socket para registrar los drones
+                    registro_dron(numeroDronesRegistrar)
+                    # borramos el token de los drones que no se han autenticado
+                    deleteTokenDron()
+                    if(isTokenDronDeleted()):
+                        print("Se han borrado los tokens de los drones que no se han autenticado")
+                    else:
+                        print("No se ha podido borrar los tokens de los drones")
 
-            # controlamos el número de drones que se van a registrar
-            while True:
-                numeroDrones = int(manejo_engine())
-                if getNumeroDronesBBDD() == numeroDrones:
-                    # abrimos socket para mandar token a los drones
-                    manejoAutDrones(numeroDrones)
-                    deleteTokenDron()
-                    if(isTokenDronDeleted()):
-                        print("Se han borrado los tokens de los drones que no se han autenticado")
-                    else:
-                        print("No se ha podido borrar los tokens de los drones")
-                elif getNumeroDronesBBDD() < numeroDrones:
-                    print(f"Se necesitan {numeroDrones-getNumeroDronesBBDD()} drones más")
-                    # abrimos socket para registrar los drones
-                    registro_dron(numeroDrones-getNumeroDronesBBDD())
-                    manejoAutDrones(getNumeroDronesBBDD())
-                    deleteTokenDron()
-                    if(isTokenDronDeleted()):
-                        print("Se han borrado los tokens de los drones que no se han autenticado")
-                    else:
-                        print("No se ha podido borrar los tokens de los drones")
-                elif getNumeroDronesBBDD() > numeroDrones:
-                    print(f"Hay {getNumeroDronesBBDD()} drones registrados, se necesitan {numeroDrones} drones")
-                    # abrimos socket para autenticar los drones
-                    manejoAutDrones(getNumeroDronesBBDD())
-                    deleteTokenDron()
-                    if(isTokenDronDeleted()):
-                        print("Se han borrado los tokens de los drones que no se han autenticado")
-                    else:
-                        print("No se ha podido borrar los tokens de los drones")
+                    # controlamos el número de drones que se van a registrar
+                    while True:
+                        numeroDrones = int(manejo_engine())
+
+                        print("Introduce el número de drones que se van a autenticar por socket")
+                        numeroDronesAutenticar = int(input())
+                        if(numeroDronesAutenticar.isdigit() and numeroDronesAutenticar > 0 and numeroDronesAutenticar <= numeroDrones):
+                            if getNumeroDronesBBDD() == numeroDrones:
+                                # abrimos socket para mandar token a los drones
+                                manejoAutDrones(numeroDronesAutenticar)
+                                deleteTokenDron()
+                                if(isTokenDronDeleted()):
+                                    print("Se han borrado los tokens de los drones que no se han autenticado")
+                                else:
+                                    print("No se ha podido borrar los tokens de los drones")
+                            elif getNumeroDronesBBDD() < numeroDrones:
+                                print(f"Se necesitan {numeroDrones-getNumeroDronesBBDD()} drones más")
+                                # abrimos socket para registrar los drones
+                                registro_dron(numeroDronesAutenticar)
+                                manejoAutDrones(getNumeroDronesBBDD())
+                                deleteTokenDron()
+                                if(isTokenDronDeleted()):
+                                    print("Se han borrado los tokens de los drones que no se han autenticado")
+                                else:
+                                    print("No se ha podido borrar los tokens de los drones")
+                            elif getNumeroDronesBBDD() > numeroDrones:
+                                print(f"Hay {getNumeroDronesBBDD()} drones registrados, se necesitan {numeroDrones} drones")
+                                # abrimos socket para autenticar los drones
+                                manejoAutDrones(numeroDronesAutenticar)
+                                deleteTokenDron()
+                                if(isTokenDronDeleted()):
+                                    print("Se han borrado los tokens de los drones que no se han autenticado")
+                                else:
+                                    print("No se ha podido borrar los tokens de los drones")
+                        else:
+                            print("Error al obtener el número de drones")
+                else:
+                    print("El número de drones no es válido")
         else:
             print("No se ha podido obtener el mapa")
 
