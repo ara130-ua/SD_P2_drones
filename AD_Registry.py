@@ -234,6 +234,15 @@ def registroDron(alias: str):
     print("Se ha registrado el dron: " + alias + " via API REST")
     return {"token": token, "id": id}
 
+@app.get("/registroDronOnlyToken")
+def registroDronSoloToken(alias: str):
+    
+    token = setTokenDron(str(alias))
+
+    print("Se ha registrado el dron: " + alias + " via API REST")
+    return {"token": token}
+
+
 ### Funciones de la API ###
 
 #---------------------------------------------#
