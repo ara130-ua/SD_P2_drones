@@ -171,7 +171,7 @@ def convertir_movimiento_strTOlist(cadena):
 ### Funciones de servidor ###
 
 def send(msg, client):
-    message = msg.encode(FORMAT)
+    message = str(msg).encode(FORMAT)
     msg_length = len(message)
     send_length = str(msg_length).encode(FORMAT)
     send_length += b' ' * (HEADER - len(send_length))
@@ -401,8 +401,8 @@ def engineRegistry(ADDR_REGISTRY, numDronesMapa):
         send(numDronesMapa, client)
         message = receive(client)
         return True
-    except:
-        print("Error al conectarse con AD_Registry")
+    except Exception as exc:
+        print(f"Error al conectarse con AD_Registry, {exc}")
         auditar_evento("Error", SERVER, "Error al conectarse con AD_Registry")
         client.close()
         return False

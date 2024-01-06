@@ -67,7 +67,7 @@ def manejoAutDrones(numeroDrones):
 
 def manejo_engine():
     server.listen()
-    print(f"AD_Registry escuchando en  {SERVER}")
+    print(f"AD_Registry escuchando en {SERVER}")
     print("Esperando que el engine le envie el mapa")
     conn, addr = server.accept()
     print(f"Se ha conectado el engine {addr}")
