@@ -155,26 +155,7 @@ def registroDron(alias: str):
     print("Se ha registrado el dron: " + alias + " via API REST")
     return {"token": token, "id": id}
 
-@app.get("/registroDronOnlyToken")
-def registroDronSoloToken(alias: str):
-    
-    token = returnToken(str(alias))
 
-    print("Se ha registrado el dron: " + alias + " via API REST")
-    return {"token": token}
-
-def returnToken(alias: str):
-    conexion = sqlite3.connect("bd1.db")
-    try:
-        cursor = conexion.cursor()
-        cursor.execute("select token from drones where alias='"+alias+"'")
-        token = cursor.fetchone()[0]
-        conexion.close()
-        return token
-    except:
-        print("Error al obtener el token del dron")
-        conexion.close()
-        return "Error"
 
 # main
 # Parametros de AD_Registry
