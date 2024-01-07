@@ -272,7 +272,7 @@ if(len(sys.argv) == 2):
             while numeroDronesBool:
                 print("Introduce el número de drones que se van a registrar por socket")
                 numeroDronesRegistrar = int(input())
-                if(numeroDronesRegistrar.isdigit() and numeroDronesRegistrar > 0 and numeroDronesRegistrar <= numeroDrones):
+                if(numeroDronesRegistrar > 0 and numeroDronesRegistrar <= numeroDrones):
                     numeroDronesBool = False
                     # Abrimos el socket para registrar los drones
                     registro_dron(numeroDronesRegistrar)
@@ -289,7 +289,7 @@ if(len(sys.argv) == 2):
 
                         print("Introduce el número de drones que se van a autenticar por socket")
                         numeroDronesAutenticar = int(input())
-                        if(numeroDronesAutenticar.isdigit() and numeroDronesAutenticar > 0 and numeroDronesAutenticar <= numeroDrones):
+                        if(numeroDronesAutenticar > 0 and numeroDronesAutenticar <= numeroDrones):
                             if getNumeroDronesBBDD() == numeroDrones:
                                 # abrimos socket para mandar token a los drones
                                 manejoAutDrones(numeroDronesAutenticar)

@@ -888,7 +888,7 @@ if  (len(sys.argv) == 7):
                                         shareKafkaPassword(contraseñaKafka)
 
                                         print("Conectando con  Openweather...")
-                                        conexionClima()
+                                        #conexionClima()
 
                                         espectaculo(listaMapa, numMaxDrones)
 
