@@ -84,10 +84,12 @@
       }
 
       function setTemperatura(datos) {
-        const ciudad = datos['ciudad'];
-        const temperatura = datos['temperatura'];
-        const elementoTemperatura = document.getElementById('temperatura');
-        elementoTemperatura.textContent = `La temperatura actual en ${ciudad} es ${temperatura} grados.`;
+        datos.forEach(dato => {
+          const ciudad = dato['ciudad'];
+          const temperatura = dato['temperatura'];
+          const elementoTemperatura = document.getElementById('temperatura');
+          elementoTemperatura.textContent = `La temperatura actual en ${ciudad} es ${temperatura} grados.`;
+        });
       }
 
       setInterval(() => {
