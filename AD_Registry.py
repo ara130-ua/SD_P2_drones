@@ -248,7 +248,6 @@ def registroDronSoloToken(alias: str):
 #---------------------------------------------#
 
 ### Main ###
-
 # Parametros de AD_Registry
 # puerto de escucha
 # ip y puerto de la bbdd (al no haber la vamos a omitir)
