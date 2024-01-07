@@ -26,9 +26,8 @@
     <h1>Mapa de los drones</h1>
     <table id="mapa"></table>
     <h1>Temperatura</h1>
-    <div id="temp">
-      <p id="ciudad"></p>
-      <p id="temperatura"></p>
+    <div id="temperatura">
+      Cargando temperatura...
     </div>
     
 
@@ -87,6 +86,8 @@
       function setTemperatura(datos) {
         const ciudad = datos['ciudad'];
         const temperatura = datos['temperatura'];
+        const elementoTemperatura = document.getElementById('temperatura');
+        elementoTemperatura.textContent = `La temperatura actual en ${ciudad} es ${temperatura} grados.`;
       }
 
       setInterval(() => {
