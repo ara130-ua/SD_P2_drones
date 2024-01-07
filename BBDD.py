@@ -56,3 +56,17 @@ try:
     print("se creo la tabla mapa")
 except sqlite3.OperationalError:
     print("La tabla mapa ya existe")
+
+#crea una tabla temperatura para la temperatura actual
+try:
+    # tabla temperatura
+    conexion.execute("create table temperatura_actual (id integer primary key, ciudad text, temperatura integer)")
+    print("se creo la tabla temperatura_actual")
+except sqlite3.OperationalError:
+    print("La tabla temperatura ya existe")
+
+#añadimos la primera fila a la tabla temperatura
+cursor = conexion.cursor()
+cursor.execute("insert into temperatura_actual (id, ciudad, temperatura) values (1, 'Alicante', 0)")
+conexion.commit()
+

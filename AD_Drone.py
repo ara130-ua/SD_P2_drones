@@ -146,30 +146,64 @@ def convertir_cadenas_a_lista(cadenas):
     # Recibe una cadena de texto con el formato: "(1, (5, 5)) (2, (5, 15)) (3, (10, 5)) (4, (10, 15))"
     # Devuelve una lista con el formato: [(1, (5, 5)), (2, (5, 15)), (3, (10, 5)), (4, (10, 15))]
     lista = []
-    num = 1
+    # sirve para el primer mensaje que es el mapa
+    if cadenas[0] == "(":
 
-    if(cadenas[0] == "("):
-        for i, elemento in enumerate(cadenas):
-            if elemento == "(" and cadenas[i+1] == str(num):
-                id = cadenas[i+1]
+        listaNumeros = []
+        num = 0
 
-                if cadenas[i+6].isdigit():
-                    posx = cadenas[i+5] + cadenas[i+6]
-                    if cadenas[i+10].isdigit():
-                        posy = cadenas[i+9] + cadenas[i+10]
-                    else:
-                        posy = cadenas[i+9]
-                else:
-                    posx = cadenas[i+5]
-                    if cadenas[i+9].isdigit():
-                        posy = cadenas[i+8] + cadenas[i+9]
-                    else:
-                        posy = cadenas[i+8]
+        for i in range(len(cadenas)):
+            elemento = cadenas[i]
+            print(f"Elemento: {elemento} y iterador: {i}")
 
-                tuple = (int(posx), int(posy))
-                tupletuple = (int(id), tuple)
-                lista.append(tupletuple)
+            if elemento.isdigit() and i + 1 < len(cadenas) and cadenas[i + 1].isdigit():
+                listaNumeros.append(int(elemento + cadenas[i + 1]))
+                i += 1  
+            elif elemento.isdigit() and not(cadenas[i - 1].isdigit()):
+                listaNumeros.append(int(elemento))
+
+        print("Lista de numeros:", listaNumeros)
+
+        num = 1
+        tuplaAux = ()
+        tuplaAuxLista = ()
+        for numero in listaNumeros:
+            if num == 1:
+                tuplaAuxLista = (numero, 0)
                 num += 1
+            elif num == 2:
+                tuplaAux = (numero, 0)
+                num += 1
+            elif num == 3:
+                tuplaAux = (tuplaAux[0], numero)
+                tuplaAuxLista = (tuplaAuxLista[0], tuplaAux)
+                lista.append(tuplaAuxLista)
+                num = 1
+
+        print("Lista resultante: " + str(lista))
+        return lista
+
+        #for i, elemento in enumerate(cadenas):
+        #    if elemento == "(" and cadenas[i+1] == str(num):
+        #        id = cadenas[i+1]
+        #
+        #        if cadenas[i+6].isdigit():
+        #            posx = cadenas[i+5] + cadenas[i+6]
+        #            if cadenas[i+10].isdigit():
+        #                posy = cadenas[i+9] + cadenas[i+10]
+        #            else:
+        #                posy = cadenas[i+9]
+        #        else:
+        #            posx = cadenas[i+5]
+        #            if cadenas[i+9].isdigit():
+        #                posy = cadenas[i+8] + cadenas[i+9]
+        #            else:
+        #                posy = cadenas[i+8]
+        #
+        #        tuple = (int(posx), int(posy))
+        #        tupletuple = (int(id), tuple)
+        #        lista.append(tupletuple)
+        #        num += 1
 
     elif(cadenas[0] == "["):
         
@@ -197,11 +231,11 @@ def convertir_cadenas_a_lista(cadenas):
                 listaaux.append(int(id))
                 listaaux.append(tupla)
                 lista.append(listaaux)
+
+        return lista
     else:
         return cadenas
         
-    return lista
-
 # Funciones para encriptar y desencriptar mensajes
 
 #----------------------------------------------------#
@@ -345,7 +379,8 @@ def actualizaMapa(listaMapa, dronMov):
 ### Funciones de conexión con los módulos ###
 
 # conexión con el módulo AD_Registry para darse de alta en el sistema
-def dronRegistry(ip_reg, puerto_reg, alias):
+
+def dronRegistry(ip_reg, puerto_reg, alias, primeraVez):
     
     ADDR = (str(ip_reg), int(puerto_reg))
 
@@ -355,9 +390,14 @@ def dronRegistry(ip_reg, puerto_reg, alias):
         print(f"Se ha establecido conexión en [{ADDR}]")
         send(alias, client)
         message = receive(client)
-        id, token = message.split(",")
-        return id, token
+        # en la segunda vuelta únicamente se recibe el token
+        if primeraVez:
+            id, token = message.split(",")
+            return id, token
+        else:
+            return message
     except Exception as exc:
+        print(f"No se ha podido conectar con el registry: {exc}")
         return None, None
 
 # conexión con el módulo AD_Engine para darse de alta en el espectaculo
@@ -420,7 +460,7 @@ def receive(client):
 
 def dronRegistryAPI(alias):
     try:
-        response = requests.get("https://127.0.0.1:8000/registroDron?alias="+alias, verify="certificado-firmado.crt")
+        response = requests.get("https://127.0.0.1:8000/registroDron?alias="+alias, verify=False)
         if(response.status_code == 200):
             print("Se ha conectado correctamente al registry")
             json = response.json()
@@ -432,6 +472,8 @@ def dronRegistryAPI(alias):
     except Exception as exc:
         print("No se ha podido conectar al registry por API ERROR: " + str(exc))
         return None
+    
+#def dronRegistryAutenticacionAPI(alias):
 
 ### Funciones de conexion via API REST ###
 
@@ -439,7 +481,7 @@ def dronRegistryAPI(alias):
 
 ### Menu Registry ###
 
-def menuRegistry(ALIAS_DRON):
+def menuRegistry(ALIAS_DRON, primeraVez):
     option = 0
     while option != 1 and option != 2:
         print("De que forma quiere conectarse al AD_Registry? (1/2)")
@@ -447,14 +489,15 @@ def menuRegistry(ALIAS_DRON):
         print("2. API REST")
         option = int(input())
         if(option == 1):
-            id, token = dronRegistry(IP_REGISTRY, PUERTO_REGISTRY, ALIAS_DRON)
-        elif(option == 2):
-            id, token = dronRegistryAPI(ALIAS_DRON)
+            return dronRegistry(IP_REGISTRY, PUERTO_REGISTRY, ALIAS_DRON, primeraVez)
+        elif(option == 2 and primeraVez):
+            return dronRegistryAPI(ALIAS_DRON)
+        #elif(option == 2 and primeraVez == False):
+        #    return dronRegistryAutenticacionAPI(ALIAS_DRON)
         else:
             print("Opción no valida")
             print("")
 
-    return id, token
 
 ### Menu Registry ###
 
@@ -465,7 +508,7 @@ def menuRegistry(ALIAS_DRON):
 def dronEngineAPI(id, token):
 
     try:
-        response = requests.get(f"https://127.0.0.1:8001/autenticacionDron?id={id}&token={token}", verify="certificado-firmado.crt")
+        response = requests.get(f"https://127.0.0.1:8001/autenticacionDron?id={id}&token={token}", verify=False)
         json = response.json()
 
         if json["mensaje"] == "Token correcto":
@@ -552,8 +595,8 @@ if (len(sys.argv) == 9):
 
     ############################ PYGAME ############################
 
-    
-    id, token = menuRegistry(ALIAS_DRON)
+    primeraVez = True
+    id, token = menuRegistry(ALIAS_DRON, primeraVez)
 
     if id:
 
@@ -563,11 +606,11 @@ if (len(sys.argv) == 9):
         # Argumentos dronEngine( IP_Engine, Puerto_Engine, ID, Token)
     
         engineOnline = True
-        primeraVez = True
+
         while engineOnline:
 
             if(primeraVez == False):
-                id, token = menuRegistry(ALIAS_DRON)
+                token = menuRegistry(ALIAS_DRON, primeraVez)
             primeraVez=False
 
             if(dronEngineAPI(id, token)):

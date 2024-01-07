@@ -25,7 +25,7 @@ app = FastAPI()
 
 HEADER = 64
 FORMAT = 'utf-8'
-SERVER = "localhost" #socket.gethostbyname(socket.gethostname())
+SERVER = "localhost" 
 
 #----------------------------------------------------------#
 
@@ -77,8 +77,7 @@ def consumidor(listaDronMov, num_drones):
             finalizados = 0
             volverBase = True
 
-        setMovimientoMapaDron(getPosEstDrones())
-        modificarMapaJson(getPosEstDrones())   
+        setMovimientoMapaDron(getPosEstDrones()) 
         pygameMapa(crearMapa(listaDronMov))
         productor(getPosEstDrones())
 
@@ -95,6 +94,8 @@ def espectaculo(listaMapa, numMaxDrones):
     listaDronMovInicial = []
     for dronMov in listaMapa:
         listaDronMovInicial.append(['R', dronMov[0], (1,1)])
+
+    initMapaDronesBBDD(len(listaMapa))
     
     if(numMaxDrones < len(listaMapa)):
         print("No hay suficientes drones para realizar el espectaculo")
@@ -102,11 +103,14 @@ def espectaculo(listaMapa, numMaxDrones):
         if(consumidor(listaDronMovInicial, len(listaMapa))):
             print("Figura finalizada")
 
-        delete_topic1 = "gnome-terminal -- bash -c '/home/joanclq/kafka/bin/kafka-topics.sh --delete --topic mapas1-topic --bootstrap-server " + ADDR_BROKER + " && exit; exec bash'"
-        delete_topic2 = "gnome-terminal -- bash -c '/home/joanclq/kafka/bin/kafka-topics.sh --delete --topic movimientos1-topic --bootstrap-server " + ADDR_BROKER + " && exit; exec bash'"
+        ### cambiar el nombre de la carpeta ###
+        delete_topic1 = "gnome-terminal -- bash -c '/home/adri-portatil/kafka/bin/kafka-topics.sh --delete --topic mapas1-topic --bootstrap-server " + ADDR_BROKER + " && exit; exec bash'"
+        delete_topic2 = "gnome-terminal -- bash -c '/home/adri-portatil/kafka/bin/kafka-topics.sh --delete --topic movimientos1-topic --bootstrap-server " + ADDR_BROKER + " && exit; exec bash'"
         subprocess.run(delete_topic2, shell=True) 
         subprocess.run(delete_topic1, shell=True)
         # si hace algo raro time.sleep(5)
+        for i in range(len(listaMapa)):
+            setEstAutenticadoDron(i+1, False)
 
 
 
@@ -171,19 +175,15 @@ def convertir_movimiento_strTOlist(cadena):
 ### Funciones de servidor ###
 
 def send(msg, client):
-    message = msg.encode(FORMAT)
+    message = str(msg).encode(FORMAT)
     msg_length = len(message)
     send_length = str(msg_length).encode(FORMAT)
     send_length += b' ' * (HEADER - len(send_length))
-    try:
-        client.send(send_length)
-        print("Enviando mensaje: ", message)
-        auditar_evento("Engine", SERVER, "Enviando mensaje: " + str(message))
-        client.send(message)
-    except Exception as exc:
-        print("Se ha cerrado la conexión inesperadamente")
-        auditar_evento("Cierre de conexión", SERVER, "Se ha cerrado la conexión inesperadamente")
-        client.close()
+    print("Enviando mensaje: ", send_length)
+    client.send(send_length)
+    print("Enviando mensaje: ", message)
+    auditar_evento("Engine", SERVER, "Enviando mensaje: " + str(message))
+    client.send(message)
 
 def receive(client):
     try:
@@ -210,43 +210,6 @@ def receive(client):
 
 ### Funciones de BBDD ###
 
-def climaBBDD(datos_clima):
-    tuplaClima = eval(datos_clima)
-    nombreCiudad = tuplaClima[0]
-    temperatura = tuplaClima[1]
-    conexion = sqlite3.connect("bd1.db")
-
-    try:
-        # comprobar los tipos de datos de nombre y de temperatura
-        conexion.execute("insert into weather (nombre, temperatura) values ('"+nombreCiudad+"',"+str(temperatura)+")")
-        conexion.commit()
-        conexion.close()
-        return("ciudad añadida a la BBDD")
-    except sqlite3.OperationalError:
-        print("Error al añadir la ciudad a la BBDD")
-        conexion.close()
-        return "Error", "Base de datos"
-    
-
-def leerUltFilaClima():
-    # nos conectamos a la BBDD y leemos la última fila
-    conexion = sqlite3.connect("bd1.db")
-    try:
-        cursor = conexion.cursor()
-        cursor.execute("select * from weather order by id desc limit 1")
-        ultimaFila = cursor.fetchone()
-        auditar_evento("Clima", SERVER, "Última fila de la BBDD leída correctamente")
-        conexion.close()
-        # convertimos los datos a una tupla y la devolvemos
-        datosClimaActual = ultimaFila[1], ultimaFila[2]
-    except sqlite3.OperationalError:
-        print("Error al leer la última fila de la BBDD")
-        auditar_evento("Error", SERVER, "Error al leer la última fila de la BBDD")
-        conexion.close()
-        return None
-    return datosClimaActual
-
-    # no está testado #
 def leerTokenDron(id):
     # nos conectamos a la BBDD y leemos el token del dron con la id recibida
     conexion = sqlite3.connect("bd1.db")
@@ -357,16 +320,32 @@ def setMovimientoMapaDron(movimientos):
     # nos conectamos a la BBDD
     conexion = sqlite3.connect("bd1.db")
     try:
+        # borramos todos los movimientos de los drones
         cursor = conexion.cursor()
         for movimiento in movimientos:
-            cursor.execute("insert into mapas (idDron, estado, coordenadaX, coordenadaY) values ("+str(movimiento[1])+",'"+str(movimiento[0])+"',"+str(movimiento[2][0])+","+str(movimiento[2][1])+")")
+            cursor.execute("update mapas set coordenadaX="+str(movimiento[2][0])+", coordenadaY="+str(movimiento[2][1])+", estado='"+str(movimiento[0])+"' where idDron="+str(movimiento[1]))
         conexion.commit()
         print("Movimientos de los drones actualizados en la BBDD del mapa")
         auditar_evento("Movimiento", SERVER, "Movimientos de los drones actualizados en la BBDD del mapa")
         conexion.close()
+    except Exception as exc:
+        print(f"Error al actualizar el movimiento del dron en el mapa: {exc}")
+        auditar_evento("Error", SERVER, f"Error al actualizar el movimiento del dron en el mapa, {exc}")
+        conexion.close()
+
+def initMapaDronesBBDD(numDrones):
+    conexion = sqlite3.connect("bd1.db")
+    try:
+        cursor = conexion.cursor()
+        for i in range(numDrones):
+            cursor.execute("insert into mapas (idDron, estado, coordenadaX, coordenadaY) values ("+str(i+1)+", 'R', 1, 1)")
+        conexion.commit()
+        print("Mapa de drones inicializado correctamente")
+        auditar_evento("Movimiento", SERVER, "Mapa de drones inicializado correctamente")
+        conexion.close()
     except:
-        print("Error al actualizar el movimiento del dron en el mapa")
-        auditar_evento("Error", SERVER, "Error al actualizar el movimiento del dron en el mapa")
+        print("Error al inicializar el mapa de drones")
+        auditar_evento("Error", SERVER, "Error al inicializar el mapa de drones")
         conexion.close()
         
 ### Funciones de BBDD ###
@@ -404,6 +383,8 @@ def manejoClima():
                 temp = round(temp, 2)
             
             print("La temperatura en", name, "es de", temp,"ºC.")
+            
+            regTemperaturaBBDD(name, temp)
 
             if(temp < 0):
                 productor("CLIMA ADVERSO")
@@ -412,11 +393,25 @@ def manejoClima():
         except:
             print("Error al conectar con Openweather")
             auditar_evento("Error", SERVER, "Error al conectar con Openweather")
-            
-        
+
+#actualizar la tabla temperatura para que tenga la nueva temperatura en el id = 1       
+def regTemperaturaBBDD(ciudad, temperatura):
+    # nos conectamos a la BBDD
+    conexion = sqlite3.connect("bd1.db")
+    try:
+        cursor = conexion.cursor()
+        cursor.execute("update temperatura_actual set ciudad='"+ciudad+"', temperatura="+str(temperatura)+" where id=1")
+        conexion.commit()
+        auditar_evento("Clima", SERVER, "Temperatura actualizada correctamente en la BBDD")
+        conexion.close()
+    except:
+        print("Error al actualizar la temperatura en la BBDD")
+        auditar_evento("Error", SERVER, "Error al actualizar la temperatura en la BBDD")
+        conexion.close()
+    
 
 def openweather(ciudad, pais=''):
-    url = 'https://api.openweathermap.org/data/2.5/weather?q='+ ciudad +','+ pais +'&appid=ab5fabb14bb7f9339114ee722d636a74'
+    url = 'https://api.openweathermap.org/data/2.5/weather?q='+ ciudad +','+ pais +'&appid=' + APIKEY
     r = requests.get(url)
     j = r.json()
     temp = j['main']['temp']
@@ -425,6 +420,35 @@ def openweather(ciudad, pais=''):
     return temp, name
 
 ### Nueva funcion con OpenWeather ###
+
+#----------------------------------------------------------#
+
+### Funciones de cliente para el AD_Registry ###
+
+def engineRegistry(ADDR_REGISTRY, numDronesMapa):
+
+    client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    try:
+        client.connect(ADDR_REGISTRY)
+        print(f"Conectado a AD_Registry en {ADDR_REGISTRY}")
+        auditar_evento("Engine", SERVER, "Conectado a AD_Registry")
+        print(f"Enviando el número de drones que van a participar en el espectaculo: {numDronesMapa}")
+        send(numDronesMapa, client)
+        message = receive(client)
+        return True
+    except Exception as exc:
+        print(f"Error al conectarse con AD_Registry, {exc}")
+        auditar_evento("Error", SERVER, "Error al conectarse con AD_Registry")
+        client.close()
+        return False
+    
+#    if(message == "OK"):
+#        print("Se ha recibido OK")
+#        auditar_evento("Engine", SERVER, "Se ha recibido OK")
+#        return True
+        
+
+### Funciones de cliente para el AD_Registry ###
 
 #----------------------------------------------------------#
 
@@ -551,37 +575,17 @@ def actualizaMapa(listaMapa, dronMov):
     return listaMapa
        
 
-def stringMapa(listaMapa):
-    strMapa = ""
-    for fila in listaMapa:
-        strMapa = strMapa + "| "
-        for elemento in fila:
-            strMapa = strMapa + "[" + elemento[0] + "," + str(elemento[1]) + "] "
-        strMapa = strMapa + "|\n"
-
-    return strMapa
-
-def modificarMapaJson(movimientos):
-
-    data = {
-        "mapa": {
-            "Drones": []
-        }
-    }
-
-    for movimiento in movimientos:
-        dron = {
-            "id": movimiento[0],
-            "estado": movimiento[1],
-            "pos": movimiento[2]
-        }
-        data["mapa"]["Drones"].append(dron)
-
-    with open('mapa.json', 'w') as archivo_json:
-        json.dump(data, archivo_json, indent=4)
+#def stringMapa(listaMapa):
+#    strMapa = ""
+#    for fila in listaMapa:
+#        strMapa = strMapa + "| "
+#        for elemento in fila:
+#            strMapa = strMapa + "[" + elemento[0] + "," + str(elemento[1]) + "] "
+#        strMapa = strMapa + "|\n"
+#
+#    return strMapa
 
 ### Funciones que manejan el fichero de drones y el mapa ###
-
 
 #----------------------------------------------------#
 
@@ -786,28 +790,10 @@ def registrar_evento(entrada_registro):
 ### Funciones para el registro de eventos en BBDD ###
 
 #----------------------------------------------------------#
-    
-### Funciones para mandar los mapas a la BBDD ###
-    
-def mandarMapaBBDD(mapa):
-    # nos conectamos a la BBDD
-    conexion = sqlite3.connect("bd1.db")
-    try:
-        cursor = conexion.cursor()
-        cursor.execute("insert into mapas (mapa) values ('"+mapa+"')")
-        conexion.commit()
-        conexion.close()
-    except:
-        print("Error al enviar el mapa a la BBDD")
-        conexion.close()
-
-### Funciones para mandar los mapas a la BBDD ###
-
-#----------------------------------------------------------#
                 
-def removeDronesBBDD():
-    os.system("rm bd1.db")
-    os.system("python BBDD.py")
+#def removeDronesBBDD():
+#    os.system("rm bd1.db")
+#    os.system("python BBDD.py")
             
 
 #usaremos 6 argumentos, la BBDD no necesita de conexion
@@ -816,7 +802,7 @@ def removeDronesBBDD():
 # puerto del AD_Engine
 # IP y puerto del Broker
 # IP y puerto del AD_Wheather
-if  (len(sys.argv) == 7):
+if  (len(sys.argv) == 8):
     
     # zona de argumentos
     
@@ -832,6 +818,11 @@ if  (len(sys.argv) == 7):
     IP_WEATHER = sys.argv[5]
     PORT_WEATHER = int(sys.argv[6])
     ADDR_WEATHER = (IP_WEATHER, PORT_WEATHER)
+
+    APIKEY = str(sys.argv[7])
+
+    IP_REGISTRY = SERVER
+    PORT_REGISTRY = 6050
 
     cert = 'certServ.pem'
 
@@ -907,21 +898,25 @@ if  (len(sys.argv) == 7):
                                 os.system("clear")
                                 print("Comenzando espectaculo")
                                 # comenzar espectaculo
-                        
-                                # Autenticación de los drones
-                                if( checkDronesAutenticados(len(listaMapa)) ):
-                                    # Lanzamos el socket para compartir la contraseña de kafka
-                                    shareKafkaPassword(contraseñaKafka)
+                                # mandar mapa al registry
+                                if(engineRegistry((IP_REGISTRY, PORT_REGISTRY), len(listaMapa))):
+                                    # Autenticación de los drones
+                                    if( checkDronesAutenticados(len(listaMapa)) ):
+                                        # Lanzamos el socket para compartir la contraseña de kafka
+                                        shareKafkaPassword(contraseñaKafka)
 
-                                    print("Conectando con  Openweather...")
-                                    conexionClima()
+                                        print("Conectando con  Openweather...")
+                                        conexionClima()
 
-                                    espectaculo(listaMapa, numMaxDrones)
+                                        espectaculo(listaMapa, numMaxDrones)
 
                                     
-                                    removeDronesBBDD()
+                                    #removeDronesBBDD()
                                     # Hacer un bucle que cada x tiempo lea la BBDD y si hay un cambio en la temperatura (negativo)
                                     # llama a la función de vuelta a base, que envia a los drones a la posicion (1,1)
+                                else:
+                                    print("No se ha podido mandar el mapa al AD_Registry")
+                                    auditar_evento("Error", SERVER, "No se ha podido conectar con el AD_Registry")
                                 
 
                                 opcFiguraSelecBool = False

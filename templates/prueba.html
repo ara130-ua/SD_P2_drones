@@ -25,6 +25,11 @@
 <body>
     <h1>Mapa de los drones</h1>
     <table id="mapa"></table>
+    <h1>Temperatura</h1>
+    <div id="temperatura">
+      Cargando temperatura...
+    </div>
+    
 
     <script>
       // Generar la tabla
@@ -39,16 +44,12 @@
         }
         mapa.appendChild(fila);
       }
-      
-      /*
-      const source = new EventSource('/drones');
-  
-      source.onmessage = function(event) {
-        const datos = JSON.parse(event.data);
-        console.log(datos);
-        pintarMapa(datos);
-      };
-      */
+
+      // obtener los datos de la temperatura
+      const temp = document.getElementById('temp');
+      const ciudad = document.createElement('p');
+      const temperatura = document.createElement('p');
+
       
       fetch('/drones')
         .then(response => response.json())
@@ -82,12 +83,29 @@
         }
       }
 
+      function setTemperatura(datos) {
+        datos.forEach(dato => {
+          const ciudad = dato['ciudad'];
+          const temperatura = dato['temperatura'];
+          const elementoTemperatura = document.getElementById('temperatura');
+          elementoTemperatura.textContent = `La temperatura actual en ${ciudad} es ${temperatura} grados.`;
+        });
+      }
+
       setInterval(() => {
         fetch('/drones')
           .then(response => response.json())
           .then(datos => {
           limpiarMapa();
           pintarMapa(datos);
+        })
+          .catch(error => {
+          console.error('Error al obtener los datos:', error);
+        });
+        fetch('/temp')
+          .then(response => response.json())
+          .then(datos => {
+          setTemperatura(datos);
         })
           .catch(error => {
           console.error('Error al obtener los datos:', error);
