@@ -411,7 +411,7 @@ def regTemperaturaBBDD(ciudad, temperatura):
     
 
 def openweather(ciudad, pais=''):
-    url = 'https://api.openweathermap.org/data/2.5/weather?q='+ ciudad +','+ pais +'&appid=ab5fabb14bb7f9339114ee722d636a74'
+    url = 'https://api.openweathermap.org/data/2.5/weather?q='+ ciudad +','+ pais +'&appid=' + APIKEY
     r = requests.get(url)
     j = r.json()
     temp = j['main']['temp']
@@ -802,7 +802,7 @@ def registrar_evento(entrada_registro):
 # puerto del AD_Engine
 # IP y puerto del Broker
 # IP y puerto del AD_Wheather
-if  (len(sys.argv) == 7):
+if  (len(sys.argv) == 8):
     
     # zona de argumentos
     
@@ -818,6 +818,8 @@ if  (len(sys.argv) == 7):
     IP_WEATHER = sys.argv[5]
     PORT_WEATHER = int(sys.argv[6])
     ADDR_WEATHER = (IP_WEATHER, PORT_WEATHER)
+
+    APIKEY = str(sys.argv[7])
 
     IP_REGISTRY = SERVER
     PORT_REGISTRY = 6050

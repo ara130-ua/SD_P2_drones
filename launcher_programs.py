@@ -9,7 +9,7 @@ kafka = "gnome-terminal -- bash -c 'python launcher_kafka.py; exec bash '"
 API_inEngine = "gnome-terminal -- bash -c 'uvicorn AD_Engine:app --reload --host 127.0.0.1 --port 8001 --ssl-keyfile clave-privada.key --ssl-certfile certificado-firmado.crt; exec bash '"
 API_Engine = "gnome-terminal -- bash -c 'uvicorn API_Engine:app --reload --host 127.0.0.1 --port 8002 '"
 API_Registry = "gnome-terminal -- bash -c 'uvicorn AD_Registry:app --reload --host 127.0.0.1 --port 8000 --ssl-keyfile private-key2.pem --ssl-certfile certificate2.crt; exec bash '"
-engine = "gnome-terminal -- bash -c 'python AD_Engine.py 8050 4 localhost 9092 localhost 7050 ; exec bash '"
+engine = "gnome-terminal -- bash -c 'python AD_Engine.py 8050 4 localhost 9092 localhost 7050 ab5fabb14bb7f9339114ee722d636a74; exec bash '"
 registry = "gnome-terminal -- bash -c 'python AD_Registry.py 6050; exec bash '"
 weather = "gnome-terminal -- bash -c 'python AD_Wheather.py 7050; exec bash '"
 
