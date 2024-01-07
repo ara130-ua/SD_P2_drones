@@ -383,6 +383,8 @@ def manejoClima():
                 temp = round(temp, 2)
             
             print("La temperatura en", name, "es de", temp,"ºC.")
+            
+            regTemperaturaBBDD(name, temp)
 
             if(temp < 0):
                 productor("CLIMA ADVERSO")
@@ -391,8 +393,22 @@ def manejoClima():
         except:
             print("Error al conectar con Openweather")
             auditar_evento("Error", SERVER, "Error al conectar con Openweather")
-            
-        
+
+#actualizar la tabla temperatura para que tenga la nueva temperatura en el id = 1       
+def regTemperaturaBBDD(ciudad, temperatura):
+    # nos conectamos a la BBDD
+    conexion = sqlite3.connect("bd1.db")
+    try:
+        cursor = conexion.cursor()
+        cursor.execute("update temperatura_actual set ciudad='"+ciudad+"', temperatura="+str(temperatura)+" where id=1")
+        conexion.commit()
+        auditar_evento("Clima", SERVER, "Temperatura actualizada correctamente en la BBDD")
+        conexion.close()
+    except:
+        print("Error al actualizar la temperatura en la BBDD")
+        auditar_evento("Error", SERVER, "Error al actualizar la temperatura en la BBDD")
+        conexion.close()
+    
 
 def openweather(ciudad, pais=''):
     url = 'https://api.openweathermap.org/data/2.5/weather?q='+ ciudad +','+ pais +'&appid=ab5fabb14bb7f9339114ee722d636a74'
