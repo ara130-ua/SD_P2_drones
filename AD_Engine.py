@@ -323,7 +323,7 @@ def setMovimientoMapaDron(movimientos):
         # borramos todos los movimientos de los drones
         cursor = conexion.cursor()
         for movimiento in movimientos:
-            cursor.execute("update mapas set coordenadaX="+str(movimiento[2][0])+", coordenadaY="+str(movimiento[2][1])+", estado="+str(movimiento[0])+" where idDron="+str(movimiento[1]))
+            cursor.execute("update mapas set coordenadaX="+str(movimiento[2][0])+", coordenadaY="+str(movimiento[2][1])+", estado='"+str(movimiento[0])+"' where idDron="+str(movimiento[1]))
         conexion.commit()
         print("Movimientos de los drones actualizados en la BBDD del mapa")
         auditar_evento("Movimiento", SERVER, "Movimientos de los drones actualizados en la BBDD del mapa")
