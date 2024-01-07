@@ -27,7 +27,8 @@
     <table id="mapa"></table>
     <h1>Temperatura</h1>
     <div id="temp">
-
+      <p id="ciudad"></p>
+      <p id="temperatura"></p>
     </div>
     
 
@@ -47,6 +48,8 @@
 
       // obtener los datos de la temperatura
       const temp = document.getElementById('temp');
+      const ciudad = document.createElement('p');
+      const temperatura = document.createElement('p');
 
       
       fetch('/drones')
@@ -81,6 +84,11 @@
         }
       }
 
+      function setTemperatura(datos) {
+        const ciudad = datos['ciudad'];
+        const temperatura = datos['temperatura'];
+      }
+
       setInterval(() => {
         fetch('/drones')
           .then(response => response.json())
@@ -94,7 +102,7 @@
         fetch('/temp')
           .then(response => response.json())
           .then(datos => {
-          document.getElementById('temp').innerHTML = datos['temp'];
+          setTemperatura(datos);
         })
           .catch(error => {
           console.error('Error al obtener los datos:', error);
